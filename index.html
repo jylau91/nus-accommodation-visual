@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Interactive 2-axis comparison of top student accommodation and coliving options for NUS Kent Ridge students." />
-  <title>NUS Student Accommodation: Interactive Comparison</title>
+  <meta name="description" content="Ranked decision-board comparison of top student accommodation and coliving options for NUS Kent Ridge students." />
+  <title>NUS Student Accommodation: Ranked Comparison</title>
   <style>
     :root {
       --bg: #f6f4ee;
@@ -196,40 +196,164 @@
       padding: 10px 12px;
     }
 
-    .chart-wrap {
-      position: relative;
+    .decision-wrap {
       background: #fffdf8;
       border: 1px solid rgba(115,105,90,.2);
       border-radius: 20px;
+      padding: 14px;
       overflow: hidden;
     }
-    svg { display: block; width: 100%; height: auto; }
-    .axis-label { font-size: 17px; font-weight: 800; fill: #343434; }
-    .tick { font-size: 13px; fill: #68645e; }
-    .grid { stroke: #e6dfd3; stroke-width: 1; }
-    .threshold { stroke: #afa490; stroke-width: 2; stroke-dasharray: 7 7; }
-    .point { cursor: pointer; transition: opacity .18s ease; }
-    .point:hover { filter: brightness(.94); }
-    .point-label { font-size: 13px; fill: #202124; font-weight: 800; pointer-events: none; paint-order: stroke; stroke: #fffdf8; stroke-width: 4px; stroke-linejoin: round; }
-
-    .tooltip {
-      position: absolute;
-      min-width: 230px;
-      max-width: 300px;
-      pointer-events: none;
-      opacity: 0;
-      transform: translate(-50%, -104%);
-      background: rgba(32,33,36,.94);
-      color: #fff;
-      border-radius: 14px;
-      padding: 12px 13px;
-      box-shadow: 0 14px 34px rgba(0,0,0,.24);
-      transition: opacity .12s ease;
-      font-size: 13px;
-      z-index: 5;
+    .decision-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
-    .tooltip b { display: block; margin-bottom: 4px; }
-    .tooltip small { color: rgba(255,255,255,.72); line-height: 1.35; }
+    .decision-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: #f6f2e9;
+      border: 1px solid rgba(115,105,90,.16);
+    }
+    .decision-board { display: grid; gap: 10px; }
+    .decision-empty {
+      padding: 28px;
+      border-radius: 16px;
+      background: #f6f2e9;
+      color: var(--muted);
+      text-align: center;
+    }
+    .decision-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 74px;
+      gap: 12px;
+      align-items: center;
+      min-height: 92px;
+      padding: 13px 14px;
+      border: 1px solid rgba(115,105,90,.18);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,253,248,.95));
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .decision-row:hover, .decision-row.active {
+      transform: translateY(-1px);
+      border-color: rgba(21,101,192,.42);
+      box-shadow: 0 12px 28px rgba(37,31,20,.08);
+      background: linear-gradient(180deg, rgba(245,250,255,.94), rgba(255,253,248,.98));
+    }
+    .decision-rank {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #f0eadf;
+      color: #5c4c31;
+      font-weight: 900;
+      font-size: 14px;
+    }
+    .decision-main { display: grid; gap: 8px; min-width: 0; }
+    .decision-title {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+    }
+    .decision-title b {
+      font-size: 15px;
+      line-height: 1.15;
+      letter-spacing: -.015em;
+    }
+    .type-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .decision-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .score-track, .component-track {
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ebe4d8;
+      border: 1px solid rgba(115,105,90,.14);
+    }
+    .score-track { height: 13px; }
+    .score-fill {
+      display: block;
+      height: 100%;
+      width: calc(var(--fit) * 1%);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--type-color), #202124);
+    }
+    .component-bars {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .component {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+    .component-label { display: flex; justify-content: space-between; gap: 8px; }
+    .component-label b { color: var(--ink); font-family: var(--mono); font-size: 11px; }
+    .component-track { height: 6px; }
+    .component-fill {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      width: calc(var(--component) * 1%);
+      background: var(--component-color);
+    }
+    .decision-score {
+      justify-self: end;
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: #202124;
+      color: #fff;
+      font-weight: 950;
+      font-size: 22px;
+      letter-spacing: -.04em;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+    .decision-score small {
+      margin-top: -8px;
+      color: rgba(255,255,255,.7);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
 
     .detail {
       position: sticky;
@@ -328,6 +452,11 @@
       h1 { font-size: 42px; }
       .hero-actions .btn { width: 100%; justify-content: center; }
       .score-grid { grid-template-columns: 1fr; }
+      .decision-wrap { padding: 10px; }
+      .decision-row { grid-template-columns: 34px minmax(0,1fr); min-height: 0; }
+      .decision-score { grid-column: 1 / -1; width: 100%; height: auto; min-height: 42px; grid-template-columns: auto auto; gap: 6px; justify-self: stretch; }
+      .decision-score small { margin-top: 0; }
+      .component-bars { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -340,19 +469,19 @@
     <section class="hero">
       <div class="hero-card">
         <span class="eyebrow">NUS Kent Ridge housing shortlist</span>
-        <h1>Student accommodation, ranked visually.</h1>
-        <p class="lede">An interactive two-axis map of ten practical NUS student housing and coliving choices. The X-axis shows approximate commute burden from NUS Kent Ridge; the Y-axis shows a normalized review/quality signal from public review snippets and institutional fit.</p>
+        <h1>Student accommodation, ranked clearly.</h1>
+        <p class="lede">A ranked decision board of ten practical NUS student housing and coliving choices. The main bar shows the weighted fit score; the smaller bars expose the trade-off between commute/proximity and review/quality signal.</p>
         <div class="hero-actions">
-          <a class="btn" href="#interactive">Explore the chart</a>
+          <a class="btn" href="#interactive">Explore the ranking</a>
           <a class="btn secondary" href="#sources">View sources</a>
         </div>
       </div>
       <aside class="method-card" aria-label="Methodology summary">
         <h2>How to read this</h2>
         <ul class="mini-list">
-          <li><span class="num">1</span><span><b>Top-right is strongest.</b> It means high quality/reviews with manageable NUS commute.</span></li>
-          <li><span class="num">2</span><span><b>Exact address matters.</b> Casa Mia, Cove and Dash are providers, so only West-side listings should be treated as NUS-friendly.</span></li>
-          <li><span class="num">3</span><span><b>Ratings are signals, not guarantees.</b> Re-check recent reviews, lease terms, deposit rules and the actual room before signing.</span></li>
+          <li><span class="num">1</span><span><b>Longest bar is strongest.</b> It combines proximity to NUS and the review/quality signal using the slider.</span></li>
+          <li><span class="num">2</span><span><b>Small bars show the trade-off.</b> Commute and quality can pull in different directions; the best options stay strong on both.</span></li>
+          <li><span class="num">3</span><span><b>Exact address matters.</b> Casa Mia, Cove and Dash are providers, so only West-side listings should be treated as NUS-friendly.</span></li>
         </ul>
         <div class="callout"><b>Verdict:</b> apply for NUS housing first. If private, prioritize lyf one-north, Coliwoo Pasir Panjang, then a West-side Casa Mia/Cove room.</div>
       </aside>
@@ -360,23 +489,23 @@
 
     <section class="meta-strip" aria-label="Page summary metrics">
       <div class="metric"><strong>10</strong><span>shortlisted housing / coliving options</span></div>
-      <div class="metric"><strong>2 axes</strong><span>distance burden vs review/quality signal</span></div>
+      <div class="metric"><strong>Weighted</strong><span>fit score from commute + quality</span></div>
       <div class="metric"><strong>4.2+</strong><span>rough threshold for stronger review signal</span></div>
       <div class="metric"><strong>≤3 km</strong><span>practical proximity zone for Kent Ridge</span></div>
     </section>
 
     <section id="interactive" class="workspace">
       <div class="panel">
-        <h2>Interactive comparison plot</h2>
-        <p>Filter by housing type, hover/click points, or adjust the commute-priority slider to reorder the shortlist. The chart axes stay fixed so distance and quality remain comparable.</p>
-        <div class="controls" aria-label="Chart controls">
+        <h2>Ranked decision board</h2>
+        <p>This replaces the cramped scatter plot with a sorted horizontal scorecard. It is easier to scan on mobile: long bar = recommended fit, then the two mini-bars show whether the score comes from proximity, quality, or both.</p>
+        <div class="controls" aria-label="Decision-board controls">
           <div class="control-row" id="typeFilters"></div>
           <div class="slider-wrap">
             <label for="weight"><b>Ranking emphasis:</b> commute priority <span id="weightLabel">55%</span></label>
             <input id="weight" type="range" min="0" max="100" value="55" />
           </div>
           <div class="control-row">
-            <label for="sort"><b>Table sort:</b></label>
+            <label for="sort"><b>Board/table sort:</b></label>
             <select id="sort">
               <option value="fit">Recommended fit</option>
               <option value="quality">Quality signal</option>
@@ -385,9 +514,13 @@
             </select>
           </div>
         </div>
-        <div class="chart-wrap">
-          <svg id="chart" viewBox="0 0 980 650" role="img" aria-label="Scatter plot comparing NUS accommodation by distance and quality"></svg>
-          <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+        <div class="decision-wrap">
+          <div class="decision-legend" aria-label="How to read the ranked bars">
+            <span><b>Long bar</b> weighted fit score</span>
+            <span><b>Green mini-bar</b> NUS proximity</span>
+            <span><b>Blue mini-bar</b> review/quality signal</span>
+          </div>
+          <div class="decision-board" id="decisionBoard" aria-label="Ranked accommodation decision board"></div>
         </div>
       </div>
 
@@ -561,20 +694,7 @@
     ];
 
     const typeColors = { Campus: '#2e7d32', Coliving: '#1565c0', 'Student hostel': '#ef6c00' };
-    const labelOffsets = {
-      nus: { dx: 26, dy: 44 },
-      coliwoo: { dx: 30, dy: 10 },
-      lyf: { dx: 30, dy: -46 },
-      casamia: { dx: 24, dy: -62 },
-      cove: { dx: 24, dy: 44 },
-      mdis: { dx: 24, dy: 28 },
-      yoha: { dx: 24, dy: -36 },
-      habyt: { dx: 24, dy: -34 },
-      dash: { dx: 24, dy: -34 },
-      balestier: { dx: -150, dy: -34 }
-    };
-    const svg = document.getElementById('chart');
-    const tooltip = document.getElementById('tooltip');
+    const decisionBoard = document.getElementById('decisionBoard');
     const detailCard = document.getElementById('detailCard');
     const rankList = document.getElementById('rankList');
     const summaryRows = document.getElementById('summaryRows');
@@ -587,16 +707,19 @@
     let selectedId = 'nus';
     let activeTypes = new Set(['Campus', 'Coliving', 'Student hostel']);
 
-    const bounds = { left: 88, top: 42, width: 820, height: 500, right: 908, bottom: 542 };
-    const xMin = 0, xMax = 11.2, yMin = 2.4, yMax = 5.0;
-    const xScale = x => bounds.left + ((x - xMin) / (xMax - xMin)) * bounds.width;
-    const yScale = y => bounds.top + ((yMax - y) / (yMax - yMin)) * bounds.height;
+    const maxDistance = 11.2;
+
+    function proximityScore(item) {
+      return Math.max(0, 100 - (item.distance / maxDistance) * 100);
+    }
+
+    function qualityScore(item) {
+      return (item.quality / 5) * 100;
+    }
 
     function fitScore(item) {
       const commuteWeight = Number(weight.value) / 100;
-      const qualityScore = (item.quality / 5) * 100;
-      const proximityScore = Math.max(0, 100 - (item.distance / xMax) * 100);
-      return (proximityScore * commuteWeight) + (qualityScore * (1 - commuteWeight));
+      return (proximityScore(item) * commuteWeight) + (qualityScore(item) * (1 - commuteWeight));
     }
 
     function filtered() { return options.filter(o => activeTypes.has(o.type)); }
@@ -620,102 +743,60 @@
       });
     }
 
-    function drawText(x, y, text, cls, anchor = 'start') {
-      const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      el.setAttribute('x', x); el.setAttribute('y', y); el.setAttribute('class', cls); el.setAttribute('text-anchor', anchor);
-      el.textContent = text;
-      svg.appendChild(el);
-      return el;
+    function decisionBand(o, score) {
+      if (o.distance <= 3.2 && o.quality >= 4.2) return 'Best-zone candidate: close to NUS + strong quality signal';
+      if (o.distance > 6 && o.quality >= 4.2) return 'Quality signal is strong, but this is commute-heavy';
+      if (o.quality < 3.5) return 'Only shortlist if budget, availability or viewing is compelling';
+      if (score >= 80) return 'Strong backup if the exact address and lease terms check out';
+      if (o.distance > 3.2) return 'Check door-to-door commute before paying any deposit';
+      return 'Worth shortlisting after fresh room-level checks';
     }
 
-    function drawLine(x1,y1,x2,y2,cls) {
-      const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      el.setAttribute('x1', x1); el.setAttribute('y1', y1); el.setAttribute('x2', x2); el.setAttribute('y2', y2); el.setAttribute('class', cls);
-      svg.appendChild(el); return el;
-    }
-
-    function drawChart() {
-      svg.innerHTML = '';
-      const shade = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      shade.setAttribute('x', xScale(0)); shade.setAttribute('y', yScale(5));
-      shade.setAttribute('width', xScale(3.2) - xScale(0)); shade.setAttribute('height', yScale(4.2) - yScale(5));
-      shade.setAttribute('fill', '#e8f5e9'); shade.setAttribute('opacity', '.95');
-      svg.appendChild(shade);
-
-      for (let x = 0; x <= 11; x++) {
-        drawLine(xScale(x), bounds.top, xScale(x), bounds.bottom, 'grid');
-        drawText(xScale(x), bounds.bottom + 26, String(x), 'tick', 'middle');
+    function renderDecisionBoard() {
+      const rows = sortedOptions();
+      if (!rows.length) {
+        decisionBoard.innerHTML = '<div class="decision-empty">No accommodation types selected. Re-enable at least one filter.</div>';
+        return;
       }
-      [2.5,3,3.5,4,4.5,5].forEach(y => {
-        drawLine(bounds.left, yScale(y), bounds.right, yScale(y), 'grid');
-        drawText(bounds.left - 18, yScale(y) + 4, y.toFixed(1), 'tick', 'end');
-      });
-      drawLine(xScale(3.2), bounds.top, xScale(3.2), bounds.bottom, 'threshold');
-      drawLine(bounds.left, yScale(4.2), bounds.right, yScale(4.2), 'threshold');
 
-      const border = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      border.setAttribute('x', bounds.left); border.setAttribute('y', bounds.top);
-      border.setAttribute('width', bounds.width); border.setAttribute('height', bounds.height);
-      border.setAttribute('fill', 'none'); border.setAttribute('stroke', '#827764'); border.setAttribute('stroke-width', '1.6');
-      svg.appendChild(border);
+      decisionBoard.innerHTML = rows.map((o, i) => {
+        const fit = fitScore(o);
+        const proximity = proximityScore(o);
+        const quality = qualityScore(o);
+        return `
+          <button class="decision-row ${o.id === selectedId ? 'active' : ''}" data-id="${o.id}" style="--fit:${fit.toFixed(1)};--type-color:${typeColors[o.type]}" aria-label="Rank ${i + 1}: ${escapeHtml(o.name)}, fit score ${fit.toFixed(0)}, ${o.distance.toFixed(1)} kilometres from NUS, quality ${o.quality.toFixed(2)} out of 5">
+            <span class="decision-rank">${i + 1}</span>
+            <span class="decision-main">
+              <span class="decision-title">
+                <b>${escapeHtml(o.short)}</b>
+                <span class="type-chip" style="background:${typeColors[o.type]}">${escapeHtml(o.type)}</span>
+              </span>
+              <span class="score-track" aria-hidden="true"><span class="score-fill"></span></span>
+              <span class="component-bars" aria-hidden="true">
+                <span class="component">
+                  <span class="component-label"><span>Commute / proximity</span><b>${proximity.toFixed(0)}</b></span>
+                  <span class="component-track"><span class="component-fill" style="--component:${proximity.toFixed(1)};--component-color:#2e7d32"></span></span>
+                </span>
+                <span class="component">
+                  <span class="component-label"><span>Review / quality</span><b>${quality.toFixed(0)}</b></span>
+                  <span class="component-track"><span class="component-fill" style="--component:${quality.toFixed(1)};--component-color:#1565c0"></span></span>
+                </span>
+              </span>
+              <span class="decision-note">${escapeHtml(decisionBand(o, fit))} · ${o.distance.toFixed(1)} km · ${o.quality.toFixed(2)}/5</span>
+            </span>
+            <span class="decision-score">${fit.toFixed(0)}<small>fit</small></span>
+          </button>
+        `;
+      }).join('');
 
-      drawText(bounds.left, 28, 'Best zone: close to NUS + strong reviews', 'tick');
-      drawText(bounds.right, yScale(4.2) - 10, 'strong-review threshold', 'tick', 'end');
-      drawText(xScale(3.2) + 8, bounds.bottom - 12, '>3 km: commute matters', 'tick');
-      drawText(bounds.left + bounds.width/2, 626, 'Approx. distance / commute burden from NUS Kent Ridge (km) — lower is better', 'axis-label', 'middle');
-      const ylabel = drawText(20, bounds.top + bounds.height/2, 'Review / quality signal normalized to /5 — higher is better', 'axis-label', 'middle');
-      ylabel.setAttribute('transform', `rotate(-90 20 ${bounds.top + bounds.height/2})`);
-
-      filtered().forEach(o => {
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('class', 'point');
-        g.setAttribute('tabindex', '0');
-        g.setAttribute('role', 'button');
-        g.setAttribute('aria-label', `${o.name}: ${o.distance}km, ${o.quality} quality`);
-        const cx = xScale(o.distance), cy = yScale(o.quality);
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
-        circle.setAttribute('r', o.id === selectedId ? 17 : 12);
-        circle.setAttribute('fill', typeColors[o.type]);
-        circle.setAttribute('stroke', o.id === selectedId ? '#202124' : '#fffdf8');
-        circle.setAttribute('stroke-width', o.id === selectedId ? '4' : '3');
-        g.appendChild(circle);
-
-        const labelOffset = labelOffsets[o.id] || { dx: 18, dy: -14 };
-        const leader = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        leader.setAttribute('x1', cx + Math.sign(labelOffset.dx) * 12);
-        leader.setAttribute('y1', cy);
-        leader.setAttribute('x2', cx + labelOffset.dx - 4);
-        leader.setAttribute('y2', cy + labelOffset.dy - 4);
-        leader.setAttribute('stroke', 'rgba(80,74,63,.45)');
-        leader.setAttribute('stroke-width', '1.2');
-        g.appendChild(leader);
-
-        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('x', cx + labelOffset.dx);
-        label.setAttribute('y', cy + labelOffset.dy);
-        label.setAttribute('class', 'point-label');
-        label.setAttribute('text-anchor', labelOffset.dx < 0 ? 'end' : 'start');
-        label.textContent = o.short;
-        g.appendChild(label);
-
-        g.addEventListener('mouseenter', evt => showTooltip(evt, o));
-        g.addEventListener('mousemove', evt => showTooltip(evt, o));
-        g.addEventListener('mouseleave', hideTooltip);
-        g.addEventListener('click', () => { selectedId = o.id; renderAll(false); document.getElementById('detailCard').scrollIntoView({block:'nearest'}); });
-        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectedId = o.id; renderAll(false); }});
-        svg.appendChild(g);
+      decisionBoard.querySelectorAll('.decision-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedId = btn.dataset.id;
+          renderAll(false);
+          document.getElementById('detailCard').scrollIntoView({block:'nearest'});
+        });
       });
     }
-
-    function showTooltip(evt, o) {
-      const rect = document.querySelector('.chart-wrap').getBoundingClientRect();
-      tooltip.style.left = `${evt.clientX - rect.left}px`;
-      tooltip.style.top = `${evt.clientY - rect.top}px`;
-      tooltip.innerHTML = `<b>${escapeHtml(o.name)}</b><small>${o.type} · ${o.distance.toFixed(1)} km · quality ${o.quality.toFixed(2)}/5<br>${escapeHtml(o.bestFor)}</small>`;
-      tooltip.style.opacity = 1;
-    }
-    function hideTooltip() { tooltip.style.opacity = 0; }
 
     function renderDetail() {
       const o = selected();
@@ -781,7 +862,7 @@
 
     function renderAll(updateSources = false) {
       weightLabel.textContent = `${weight.value}%`;
-      drawChart();
+      renderDecisionBoard();
       renderDetail();
       renderRankList();
       renderTable();
