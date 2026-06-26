@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Interactive 2-axis comparison of top student accommodation and coliving options for NUS Kent Ridge students." />
+  <title>NUS Student Accommodation: Interactive Comparison</title>
+  <style>
+    :root {
+      --bg: #f6f4ee;
+      --paper: #fffdf8;
+      --ink: #202124;
+      --muted: #63635f;
+      --line: #ded8cc;
+      --line-strong: #bdb4a3;
+      --green: #2e7d32;
+      --blue: #1565c0;
+      --orange: #ef6c00;
+      --red: #b3261e;
+      --cream: #fff7e6;
+      --shadow: 0 22px 70px rgba(37, 31, 20, .10);
+      --radius: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% -10%, rgba(21, 101, 192, .14), transparent 34rem),
+        radial-gradient(circle at 92% 0%, rgba(239, 108, 0, .12), transparent 32rem),
+        linear-gradient(180deg, #f8f5ef 0%, var(--bg) 44%, #f1ede3 100%);
+      min-height: 100vh;
+    }
+
+    a { color: #174ea6; text-decoration-thickness: .08em; text-underline-offset: .18em; }
+    a:hover { color: #0b3d91; }
+    button, input, select { font: inherit; }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 26px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .hero-card, .method-card, .panel, .table-card, .source-card {
+      border: 1px solid rgba(115, 105, 90, .22);
+      background: rgba(255, 253, 248, .78);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .hero-card { padding: 36px; position: relative; overflow: hidden; }
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -90px;
+      bottom: -110px;
+      background: radial-gradient(circle, rgba(21,101,192,.14), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 12px;
+      border: 1px solid rgba(21,101,192,.22);
+      border-radius: 999px;
+      background: rgba(21,101,192,.07);
+      color: #174ea6;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-family: var(--serif);
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: .95;
+      letter-spacing: -.055em;
+      max-width: 760px;
+    }
+
+    .lede {
+      color: var(--muted);
+      max-width: 760px;
+      font-size: 17px;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .btn {
+      border: 1px solid rgba(32,33,36,.16);
+      border-radius: 999px;
+      padding: 12px 16px;
+      min-height: 44px;
+      background: #202124;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 750;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .btn.secondary { background: #fffdf8; color: var(--ink); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(32,33,36,.13); color: inherit; }
+    .btn:not(.secondary):hover { color: #fff; background: #111; }
+
+    .method-card { padding: 24px; display: grid; align-content: space-between; gap: 18px; }
+    .method-card h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+    .mini-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .mini-list li { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: start; color: var(--muted); line-height: 1.45; }
+    .mini-list b { color: var(--ink); }
+    .num {
+      width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center;
+      background: #f0eadf; color: #5c4c31; font-weight: 800; font-size: 13px;
+    }
+
+    .meta-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 24px 0;
+    }
+    .metric {
+      background: rgba(255,255,255,.62);
+      border: 1px solid rgba(115,105,90,.18);
+      border-radius: 18px;
+      padding: 18px;
+    }
+    .metric strong { display:block; font-size: 26px; letter-spacing:-.04em; }
+    .metric span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 18px;
+      align-items: start;
+      margin-top: 22px;
+    }
+
+    .panel { padding: 22px; }
+    .panel h2, .table-card h2, .source-card h2 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.035em; }
+    .panel p, .table-card p, .source-card p { color: var(--muted); line-height: 1.55; }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+      margin: 18px 0 16px;
+      padding: 16px;
+      background: rgba(246,244,238,.72);
+      border: 1px solid rgba(115,105,90,.18);
+      border-radius: 18px;
+    }
+    .control-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .pill-check {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(32,33,36,.14);
+      background: #fffdf8;
+      padding: 9px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .pill-check input { accent-color: #174ea6; }
+    .slider-wrap { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; width: 100%; }
+    input[type="range"] { width: 100%; accent-color: #174ea6; }
+    select {
+      border: 1px solid rgba(32,33,36,.16);
+      background: #fffdf8;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      background: #fffdf8;
+      border: 1px solid rgba(115,105,90,.2);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    svg { display: block; width: 100%; height: auto; }
+    .axis-label { font-size: 17px; font-weight: 800; fill: #343434; }
+    .tick { font-size: 13px; fill: #68645e; }
+    .grid { stroke: #e6dfd3; stroke-width: 1; }
+    .threshold { stroke: #afa490; stroke-width: 2; stroke-dasharray: 7 7; }
+    .point { cursor: pointer; transition: opacity .18s ease; }
+    .point:hover { filter: brightness(.94); }
+    .point-label { font-size: 13px; fill: #202124; font-weight: 800; pointer-events: none; paint-order: stroke; stroke: #fffdf8; stroke-width: 4px; stroke-linejoin: round; }
+
+    .tooltip {
+      position: absolute;
+      min-width: 230px;
+      max-width: 300px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -104%);
+      background: rgba(32,33,36,.94);
+      color: #fff;
+      border-radius: 14px;
+      padding: 12px 13px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.24);
+      transition: opacity .12s ease;
+      font-size: 13px;
+      z-index: 5;
+    }
+    .tooltip b { display: block; margin-bottom: 4px; }
+    .tooltip small { color: rgba(255,255,255,.72); line-height: 1.35; }
+
+    .detail {
+      position: sticky;
+      top: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .detail-card {
+      border-radius: var(--radius);
+      border: 1px solid rgba(115,105,90,.22);
+      background: rgba(255,253,248,.9);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .detail-card h3 { margin: 0 0 8px; font-size: 24px; line-height: 1.05; letter-spacing: -.035em; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 12px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em;
+      padding: 7px 9px; border-radius: 999px; background: #f0eadf; color: #5d4a2c;
+      margin-bottom: 12px;
+    }
+    .score-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin: 14px 0; }
+    .score-box { padding: 12px; border-radius: 14px; background: #f6f2e9; border: 1px solid rgba(115,105,90,.14); }
+    .score-box b { display:block; font-size: 20px; }
+    .score-box span { color: var(--muted); font-size: 12px; }
+    .detail-card ul { margin: 12px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.55; }
+
+    .rank-list { display: grid; gap: 8px; margin-top: 12px; }
+    .rank-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(115,105,90,.18);
+      border-radius: 14px;
+      background: #fffdf8;
+      padding: 11px 12px;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .rank-item:hover, .rank-item.active { border-color: rgba(21,101,192,.42); background: rgba(21,101,192,.05); }
+    .rank-no { font-weight: 900; color: #746852; }
+    .rank-name { font-weight: 800; font-size: 14px; line-height: 1.18; }
+    .rank-score { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+
+    .table-card { padding: 24px; margin-top: 18px; overflow: hidden; }
+    .table-scroll { overflow-x: auto; border-radius: 18px; border: 1px solid rgba(115,105,90,.18); background: #fffdf8; }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    th, td { padding: 14px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid #eee7dc; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #6c6252; background: #f5efe5; position: sticky; top: 0; }
+    td { font-size: 14px; line-height: 1.42; }
+    tr:last-child td { border-bottom: 0; }
+    .type-dot { width: 10px; height: 10px; border-radius: 99px; display: inline-block; margin-right: 7px; vertical-align: middle; }
+
+    .source-card { padding: 24px; margin-top: 18px; }
+    .sources-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 16px; }
+    .source-group {
+      background: rgba(255,255,255,.64);
+      border: 1px solid rgba(115,105,90,.18);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .source-group h3 { margin: 0 0 10px; font-size: 16px; letter-spacing: -.02em; }
+    .source-group ul { margin: 0; padding-left: 18px; color: var(--muted); line-height: 1.55; }
+    .source-group li { margin: 6px 0; }
+
+    .callout {
+      margin-top: 18px;
+      border-left: 5px solid #174ea6;
+      background: rgba(21,101,192,.08);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: #354154;
+      line-height: 1.55;
+    }
+
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      .hero, .workspace { grid-template-columns: 1fr; }
+      .meta-strip { grid-template-columns: repeat(2,1fr); }
+      .detail { position: static; }
+      .sources-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .page { width: min(100vw - 20px, 1180px); padding-top: 20px; }
+      .hero-card, .method-card, .panel, .table-card, .source-card { padding: 18px; border-radius: 18px; }
+      .meta-strip { grid-template-columns: 1fr; }
+      h1 { font-size: 42px; }
+      .hero-actions .btn { width: 100%; justify-content: center; }
+      .score-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <span class="eyebrow">NUS Kent Ridge housing shortlist</span>
+        <h1>Student accommodation, ranked visually.</h1>
+        <p class="lede">An interactive two-axis map of ten practical NUS student housing and coliving choices. The X-axis shows approximate commute burden from NUS Kent Ridge; the Y-axis shows a normalized review/quality signal from public review snippets and institutional fit.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#interactive">Explore the chart</a>
+          <a class="btn secondary" href="#sources">View sources</a>
+        </div>
+      </div>
+      <aside class="method-card" aria-label="Methodology summary">
+        <h2>How to read this</h2>
+        <ul class="mini-list">
+          <li><span class="num">1</span><span><b>Top-right is strongest.</b> It means high quality/reviews with manageable NUS commute.</span></li>
+          <li><span class="num">2</span><span><b>Exact address matters.</b> Casa Mia, Cove and Dash are providers, so only West-side listings should be treated as NUS-friendly.</span></li>
+          <li><span class="num">3</span><span><b>Ratings are signals, not guarantees.</b> Re-check recent reviews, lease terms, deposit rules and the actual room before signing.</span></li>
+        </ul>
+        <div class="callout"><b>Verdict:</b> apply for NUS housing first. If private, prioritize lyf one-north, Coliwoo Pasir Panjang, then a West-side Casa Mia/Cove room.</div>
+      </aside>
+    </section>
+
+    <section class="meta-strip" aria-label="Page summary metrics">
+      <div class="metric"><strong>10</strong><span>shortlisted housing / coliving options</span></div>
+      <div class="metric"><strong>2 axes</strong><span>distance burden vs review/quality signal</span></div>
+      <div class="metric"><strong>4.2+</strong><span>rough threshold for stronger review signal</span></div>
+      <div class="metric"><strong>≤3 km</strong><span>practical proximity zone for Kent Ridge</span></div>
+    </section>
+
+    <section id="interactive" class="workspace">
+      <div class="panel">
+        <h2>Interactive comparison plot</h2>
+        <p>Filter by housing type, hover/click points, or adjust the commute-priority slider to reorder the shortlist. The chart axes stay fixed so distance and quality remain comparable.</p>
+        <div class="controls" aria-label="Chart controls">
+          <div class="control-row" id="typeFilters"></div>
+          <div class="slider-wrap">
+            <label for="weight"><b>Ranking emphasis:</b> commute priority <span id="weightLabel">55%</span></label>
+            <input id="weight" type="range" min="0" max="100" value="55" />
+          </div>
+          <div class="control-row">
+            <label for="sort"><b>Table sort:</b></label>
+            <select id="sort">
+              <option value="fit">Recommended fit</option>
+              <option value="quality">Quality signal</option>
+              <option value="distance">Distance / commute</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <svg id="chart" viewBox="0 0 980 650" role="img" aria-label="Scatter plot comparing NUS accommodation by distance and quality"></svg>
+          <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <aside class="detail" aria-label="Selected accommodation details">
+        <div class="detail-card" id="detailCard"></div>
+        <div class="detail-card">
+          <h3>Dynamic ranking</h3>
+          <p style="margin:0;color:var(--muted);line-height:1.5">Ranking combines normalized quality and proximity using the commute-priority slider.</p>
+          <div class="rank-list" id="rankList"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="table-card" id="table-section">
+      <h2>Sortable summary table</h2>
+      <p>The quality score is normalized to /5. It blends public review snippets where available with a qualitative adjustment for campus/institutional fit. Use it as a shortlist guide, not as a contract decision.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Type</th>
+              <th>Approx. distance</th>
+              <th>Quality signal</th>
+              <th>Best for</th>
+              <th>Main watch-out</th>
+            </tr>
+          </thead>
+          <tbody id="summaryRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="source-card" id="sources">
+      <h2>Sources and links</h2>
+      <p>These are the source links used to build the visual. Ratings and availability change frequently, so treat this as a launchpad for fresh checks before booking.</p>
+      <div class="sources-grid" id="sourcesGrid"></div>
+      <div class="callout"><b>Research caveat:</b> distances are approximate from NUS Kent Ridge and public map geocoding. For provider-based coliving, distance varies by exact room address. Public review snippets were gathered around 2026-06-26 22:44 Singapore time.</div>
+    </section>
+
+    <footer>
+      Built as a static GitHub Pages visual for JY. No tracking, no external scripts, no booking affiliate links.
+    </footer>
+  </main>
+
+  <script>
+    const options = [
+      {
+        id: 'nus', name: 'NUS on-campus housing', short: 'NUS on-campus', type: 'Campus',
+        distance: 0.4, quality: 4.7, ratingLabel: 'Qualitative 4.7/5',
+        bestFor: 'Eligible NUS students who want lowest commute, student community and predictable admin.',
+        watchOut: 'Competitive allocation; some halls/RCs have meal plans, programmes or eligibility constraints.',
+        notes: ['Best first application if eligible', 'UTown Residence / PGPR / RCs / Halls', 'Usually strongest value-to-commute ratio'],
+        sources: [
+          ['NUS OSA accommodation overview', 'https://osa.nus.edu.sg/accommodation/'],
+          ['NUS hostel options', 'https://osa.nus.edu.sg/accommodation/hostel-options/'],
+          ['NUS UG residence rates PDF, 2026', 'https://osa.nus.edu.sg/wp-content/uploads/2026/02/UG-Residences-Rates-as-at-25-Feb-2026.pdf']
+        ]
+      },
+      {
+        id: 'lyf', name: 'lyf one-north Singapore', short: 'lyf one-north', type: 'Coliving',
+        distance: 1.4, quality: 4.5, ratingLabel: '8.5–9.1/10; 4.0–4.5/5 snippets',
+        bestFor: 'Private coliving/aparthotel feel near one-north MRT with shared kitchen, gym and pool.',
+        watchOut: 'May price more like a serviced apartment or hotel than a student hostel.',
+        notes: ['Strongest private overall pick', 'Modern facilities and excellent MRT access', 'Near NUS but check monthly pricing'],
+        sources: [
+          ['Official lyf one-north page', 'https://www.discoverasr.com/en/lyf/singapore/lyf-one-north-singapore'],
+          ['Trip.com review page', 'https://us.trip.com/hotels/singapore-hotel-detail-80962806/lyf-one-north-singapore/review.html'],
+          ['Booking.com reviews', 'https://www.booking.com/reviews/sg/hotel/lyf-one-north-singapore.html'],
+          ['Tripadvisor page', 'https://www.tripadvisor.com/Hotel_Review-g294265-d23753780-Reviews-Lyf_One_North_Singapore-Singapore.html']
+        ]
+      },
+      {
+        id: 'coliwoo', name: 'Coliwoo Hotel Pasir Panjang', short: 'Coliwoo Pasir Panjang', type: 'Coliving',
+        distance: 0.9, quality: 4.35, ratingLabel: '8.7/10 or ~4.3/5 snippets',
+        bestFor: 'Closest practical private coliving-style option for NUS Kent Ridge.',
+        watchOut: 'Ratings vary by platform; inspect room size, lease terms, housekeeping and utility rules.',
+        notes: ['Closest private option', 'Pasir Panjang / Haw Par Villa side', 'Kitchenette / washer-dryer style rooms may suit longer stays'],
+        sources: [
+          ['Official Coliwoo Pasir Panjang page', 'https://coliwoo.com/hotel-apartment-rental/pasir-panjang/'],
+          ['Trip.com reviews', 'https://sg.trip.com/hotels/singapore-hotel-detail-114683085/coliwoo-hotel-pasir-panjang-coliving/review.html'],
+          ['Coliwoo blog: Pasir Panjang', 'https://coliwoo.com/blog_post/coliwoo-hotel-pasir-panjang-modern-co-living-excellence-with-flexible-stays/']
+        ]
+      },
+      {
+        id: 'casamia', name: 'Casa Mia Coliving near West-side locations', short: 'Casa Mia near West', type: 'Coliving',
+        distance: 2.5, quality: 4.6, ratingLabel: 'Provider claims Google Reviews 4.6',
+        bestFor: 'Private bedroom in a shared apartment with community and furnished setup.',
+        watchOut: 'Not one fixed building; only Clementi, Dover, Kent Ridge, one-north or Queenstown listings are NUS-friendly.',
+        notes: ['Good provider reputation', 'Location-dependent', 'Ask for exact door-to-campus commute before paying deposit'],
+        sources: [
+          ['Casa Mia NUS student accommodation guide', 'https://www.casamia.co/blog/rent-room-near-national-university-singapore-nus-student-accommodation'],
+          ['Casa Mia: Four Years of Easy Living', 'https://www.casamia.co/blog/four-years-of-easy-living'],
+          ['Casa Mia homepage', 'https://www.casamia.co/']
+        ]
+      },
+      {
+        id: 'cove', name: 'Cove student accommodation near West-side locations', short: 'Cove near West', type: 'Coliving',
+        distance: 3.0, quality: 4.5, ratingLabel: 'ColivingSG says 4.5 stars / 10k+ reviews',
+        bestFor: 'Broad inventory and flexible student-oriented room search.',
+        watchOut: 'Quality is unit-specific; verify legal lease, bugs/maintenance, bathroom sharing and utility caps.',
+        notes: ['Large student accommodation inventory', 'Good backup if exact address is near NUS', 'Inspect unit-level reviews and photos'],
+        sources: [
+          ['Cove student accommodation page', 'https://cove.sg/students'],
+          ['ColivingSG Cove brand page', 'https://www.colivingsg.com/brands/cove'],
+          ['The Best Singapore Cove review', 'https://www.thebestsingapore.com/biz-review/cove-review/'],
+          ['Reddit caution thread on Cove experience', 'https://www.reddit.com/r/askSingapore/comments/17xc8dd/considering_cove_living_in_sg_whats_your/']
+        ]
+      },
+      {
+        id: 'mdis', name: 'MDIS Residences @ Stirling', short: 'MDIS @ Stirling', type: 'Student hostel',
+        distance: 3.0, quality: 2.8, ratingLabel: 'Mixed / negative public snippets',
+        bestFor: 'Students who need dedicated student-hostel-style accommodation near Queenstown.',
+        watchOut: 'Several negative review snippets; inspect room, facilities and deposit/refund terms carefully.',
+        notes: ['Near-ish to NUS', 'Student-residence positioning', 'Only consider after in-person viewing'],
+        sources: [
+          ['MDIS Residences official hostel site', 'https://hostel.mdis.edu.sg/'],
+          ['MDIS Residences @ Stirling official info', 'https://www.mdis.edu.sg/mdis-residences-stirling'],
+          ['University Living MDIS listing', 'https://www.universityliving.com/singapore/singapore/property/mdis-residences'],
+          ['EdgeProp reviews page', 'https://www.edgeprop.sg/condo-apartment/mdis-residence@stirling']
+        ]
+      },
+      {
+        id: 'yoha', name: 'yo:HA @ Henderson', short: 'yo:HA Henderson', type: 'Student hostel',
+        distance: 5.0, quality: 3.2, ratingLabel: 'Basic / dated-facility snippets',
+        bestFor: 'Budget-conscious students who can accept a longer commute and basic hostel facilities.',
+        watchOut: 'Not very close to Kent Ridge; facilities may be dated compared with newer coliving options.',
+        notes: ['Student hostel format', 'Henderson / Redhill side', 'Reasonable budget option if commute is acceptable'],
+        sources: [
+          ['yo:HA Henderson official page', 'https://yoha.com.sg/student-hostel-singapore/henderson/'],
+          ['The Best SG yo:HA listing', 'https://thebestsg.com/business/yoha-hostel-singapore']
+        ]
+      },
+      {
+        id: 'habyt', name: 'Habyt / Hmlet Cantonment', short: 'Habyt/Hmlet Cantonment', type: 'Coliving',
+        distance: 7.5, quality: 4.5, ratingLabel: 'Tripadvisor snippets around 4.5/5',
+        bestFor: 'Students who value central-city living over proximity to NUS.',
+        watchOut: 'Cantonment/Tanjong Pagar is far for daily Kent Ridge classes.',
+        notes: ['Good central coliving option', 'Polished but commute-heavy', 'Consider only if lifestyle beats commute'],
+        sources: [
+          ['Tripadvisor Hmlet Cantonment page', 'https://www.tripadvisor.com/Hotel_Review-g294265-d19218718-Reviews-Hmlet_Cantonment-Singapore.html'],
+          ['Habyt Singapore', 'https://www.habyt.com/'],
+          ['Her World coliving booking review', 'https://www.herworld.com/pov/this-is-my-review-of-co-living-space-hmlets-booking-process'],
+          ['Stacked Homes experience article', 'https://stackedhomes.com/i-stayed-at-hmlet-cantonment-heres-what-my-actual-co-living-experience-was-like-not-great/']
+        ]
+      },
+      {
+        id: 'dash', name: 'Dash Living central / student stays', short: 'Dash Living central', type: 'Coliving',
+        distance: 8.0, quality: 3.4, ratingLabel: 'Mixed Trustpilot snippets',
+        bestFor: 'Flexible furnished stays if a suitable West-side property appears.',
+        watchOut: 'Central locations are commute-heavy; deposit and support reviews are mixed.',
+        notes: ['Flexible living provider', 'Only NUS-friendly if exact address is west', 'Scrutinize cancellation/deposit terms'],
+        sources: [
+          ['Dash Living Singapore', 'https://www.dash.co/en/singapore'],
+          ['Dash Living student accommodation page', 'https://www.dash.co/en/student-accommodation'],
+          ['Trustpilot Dash reviews', 'https://www.trustpilot.com/review/dash.co']
+        ]
+      },
+      {
+        id: 'balestier', name: "Balestier Students' Hostel", short: 'Balestier Hostel', type: 'Student hostel',
+        distance: 10.5, quality: 3.1, ratingLabel: 'Limited public rating data',
+        bestFor: 'Students studying nearer central/Novena/Balestier, or those prioritizing legacy student-hostel setup.',
+        watchOut: 'Far from NUS Kent Ridge; review data is thinner than for major coliving operators.',
+        notes: ['Longstanding student hostel', 'Far for NUS', 'Budget/availability may be the main reason to consider'],
+        sources: [
+          ['Balestier Students’ Hostel official site', 'https://bshostel.com/'],
+          ['uHomes Balestier listing', 'https://en.uhomes.com/sg/singapore/detail-apartments-1551690'],
+          ['Student.com Balestier listing', 'https://www.student.com/sg/singapore/p/balestier-students-hostel-2']
+        ]
+      }
+    ];
+
+    const typeColors = { Campus: '#2e7d32', Coliving: '#1565c0', 'Student hostel': '#ef6c00' };
+    const labelOffsets = {
+      nus: { dx: 26, dy: 44 },
+      coliwoo: { dx: 30, dy: 10 },
+      lyf: { dx: 30, dy: -46 },
+      casamia: { dx: 24, dy: -62 },
+      cove: { dx: 24, dy: 44 },
+      mdis: { dx: 24, dy: 28 },
+      yoha: { dx: 24, dy: -36 },
+      habyt: { dx: 24, dy: -34 },
+      dash: { dx: 24, dy: -34 },
+      balestier: { dx: -150, dy: -34 }
+    };
+    const svg = document.getElementById('chart');
+    const tooltip = document.getElementById('tooltip');
+    const detailCard = document.getElementById('detailCard');
+    const rankList = document.getElementById('rankList');
+    const summaryRows = document.getElementById('summaryRows');
+    const sourcesGrid = document.getElementById('sourcesGrid');
+    const weight = document.getElementById('weight');
+    const weightLabel = document.getElementById('weightLabel');
+    const sortSelect = document.getElementById('sort');
+    const typeFilters = document.getElementById('typeFilters');
+
+    let selectedId = 'nus';
+    let activeTypes = new Set(['Campus', 'Coliving', 'Student hostel']);
+
+    const bounds = { left: 88, top: 42, width: 820, height: 500, right: 908, bottom: 542 };
+    const xMin = 0, xMax = 11.2, yMin = 2.4, yMax = 5.0;
+    const xScale = x => bounds.left + ((x - xMin) / (xMax - xMin)) * bounds.width;
+    const yScale = y => bounds.top + ((yMax - y) / (yMax - yMin)) * bounds.height;
+
+    function fitScore(item) {
+      const commuteWeight = Number(weight.value) / 100;
+      const qualityScore = (item.quality / 5) * 100;
+      const proximityScore = Math.max(0, 100 - (item.distance / xMax) * 100);
+      return (proximityScore * commuteWeight) + (qualityScore * (1 - commuteWeight));
+    }
+
+    function filtered() { return options.filter(o => activeTypes.has(o.type)); }
+    function selected() { return options.find(o => o.id === selectedId) || options[0]; }
+    function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function initFilters() {
+      ['Campus', 'Coliving', 'Student hostel'].forEach(type => {
+        const label = document.createElement('label');
+        label.className = 'pill-check';
+        label.innerHTML = `<input type="checkbox" checked data-type="${type}"><span class="type-dot" style="background:${typeColors[type]}"></span>${type}`;
+        typeFilters.appendChild(label);
+      });
+      typeFilters.addEventListener('change', e => {
+        if (e.target.matches('input[type="checkbox"]')) {
+          const t = e.target.dataset.type;
+          if (e.target.checked) activeTypes.add(t); else activeTypes.delete(t);
+          if (!activeTypes.has(selected().type) && filtered().length) selectedId = filtered()[0].id;
+          renderAll();
+        }
+      });
+    }
+
+    function drawText(x, y, text, cls, anchor = 'start') {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      el.setAttribute('x', x); el.setAttribute('y', y); el.setAttribute('class', cls); el.setAttribute('text-anchor', anchor);
+      el.textContent = text;
+      svg.appendChild(el);
+      return el;
+    }
+
+    function drawLine(x1,y1,x2,y2,cls) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      el.setAttribute('x1', x1); el.setAttribute('y1', y1); el.setAttribute('x2', x2); el.setAttribute('y2', y2); el.setAttribute('class', cls);
+      svg.appendChild(el); return el;
+    }
+
+    function drawChart() {
+      svg.innerHTML = '';
+      const shade = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      shade.setAttribute('x', xScale(0)); shade.setAttribute('y', yScale(5));
+      shade.setAttribute('width', xScale(3.2) - xScale(0)); shade.setAttribute('height', yScale(4.2) - yScale(5));
+      shade.setAttribute('fill', '#e8f5e9'); shade.setAttribute('opacity', '.95');
+      svg.appendChild(shade);
+
+      for (let x = 0; x <= 11; x++) {
+        drawLine(xScale(x), bounds.top, xScale(x), bounds.bottom, 'grid');
+        drawText(xScale(x), bounds.bottom + 26, String(x), 'tick', 'middle');
+      }
+      [2.5,3,3.5,4,4.5,5].forEach(y => {
+        drawLine(bounds.left, yScale(y), bounds.right, yScale(y), 'grid');
+        drawText(bounds.left - 18, yScale(y) + 4, y.toFixed(1), 'tick', 'end');
+      });
+      drawLine(xScale(3.2), bounds.top, xScale(3.2), bounds.bottom, 'threshold');
+      drawLine(bounds.left, yScale(4.2), bounds.right, yScale(4.2), 'threshold');
+
+      const border = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      border.setAttribute('x', bounds.left); border.setAttribute('y', bounds.top);
+      border.setAttribute('width', bounds.width); border.setAttribute('height', bounds.height);
+      border.setAttribute('fill', 'none'); border.setAttribute('stroke', '#827764'); border.setAttribute('stroke-width', '1.6');
+      svg.appendChild(border);
+
+      drawText(bounds.left, 28, 'Best zone: close to NUS + strong reviews', 'tick');
+      drawText(bounds.right, yScale(4.2) - 10, 'strong-review threshold', 'tick', 'end');
+      drawText(xScale(3.2) + 8, bounds.bottom - 12, '>3 km: commute matters', 'tick');
+      drawText(bounds.left + bounds.width/2, 626, 'Approx. distance / commute burden from NUS Kent Ridge (km) — lower is better', 'axis-label', 'middle');
+      const ylabel = drawText(20, bounds.top + bounds.height/2, 'Review / quality signal normalized to /5 — higher is better', 'axis-label', 'middle');
+      ylabel.setAttribute('transform', `rotate(-90 20 ${bounds.top + bounds.height/2})`);
+
+      filtered().forEach(o => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'point');
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', `${o.name}: ${o.distance}km, ${o.quality} quality`);
+        const cx = xScale(o.distance), cy = yScale(o.quality);
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
+        circle.setAttribute('r', o.id === selectedId ? 17 : 12);
+        circle.setAttribute('fill', typeColors[o.type]);
+        circle.setAttribute('stroke', o.id === selectedId ? '#202124' : '#fffdf8');
+        circle.setAttribute('stroke-width', o.id === selectedId ? '4' : '3');
+        g.appendChild(circle);
+
+        const labelOffset = labelOffsets[o.id] || { dx: 18, dy: -14 };
+        const leader = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        leader.setAttribute('x1', cx + Math.sign(labelOffset.dx) * 12);
+        leader.setAttribute('y1', cy);
+        leader.setAttribute('x2', cx + labelOffset.dx - 4);
+        leader.setAttribute('y2', cy + labelOffset.dy - 4);
+        leader.setAttribute('stroke', 'rgba(80,74,63,.45)');
+        leader.setAttribute('stroke-width', '1.2');
+        g.appendChild(leader);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', cx + labelOffset.dx);
+        label.setAttribute('y', cy + labelOffset.dy);
+        label.setAttribute('class', 'point-label');
+        label.setAttribute('text-anchor', labelOffset.dx < 0 ? 'end' : 'start');
+        label.textContent = o.short;
+        g.appendChild(label);
+
+        g.addEventListener('mouseenter', evt => showTooltip(evt, o));
+        g.addEventListener('mousemove', evt => showTooltip(evt, o));
+        g.addEventListener('mouseleave', hideTooltip);
+        g.addEventListener('click', () => { selectedId = o.id; renderAll(false); document.getElementById('detailCard').scrollIntoView({block:'nearest'}); });
+        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectedId = o.id; renderAll(false); }});
+        svg.appendChild(g);
+      });
+    }
+
+    function showTooltip(evt, o) {
+      const rect = document.querySelector('.chart-wrap').getBoundingClientRect();
+      tooltip.style.left = `${evt.clientX - rect.left}px`;
+      tooltip.style.top = `${evt.clientY - rect.top}px`;
+      tooltip.innerHTML = `<b>${escapeHtml(o.name)}</b><small>${o.type} · ${o.distance.toFixed(1)} km · quality ${o.quality.toFixed(2)}/5<br>${escapeHtml(o.bestFor)}</small>`;
+      tooltip.style.opacity = 1;
+    }
+    function hideTooltip() { tooltip.style.opacity = 0; }
+
+    function renderDetail() {
+      const o = selected();
+      detailCard.innerHTML = `
+        <span class="tag"><span class="type-dot" style="background:${typeColors[o.type]}"></span>${escapeHtml(o.type)}</span>
+        <h3>${escapeHtml(o.name)}</h3>
+        <p style="margin:0;color:var(--muted);line-height:1.55">${escapeHtml(o.bestFor)}</p>
+        <div class="score-grid">
+          <div class="score-box"><b>${o.distance.toFixed(1)} km</b><span>Approx. NUS distance signal</span></div>
+          <div class="score-box"><b>${o.quality.toFixed(2)}/5</b><span>${escapeHtml(o.ratingLabel)}</span></div>
+          <div class="score-box"><b>${fitScore(o).toFixed(0)}</b><span>Dynamic fit score</span></div>
+          <div class="score-box"><b>${o.sources.length}</b><span>Source links</span></div>
+        </div>
+        <b>Main watch-out</b>
+        <p style="margin:6px 0 0;color:var(--muted);line-height:1.55">${escapeHtml(o.watchOut)}</p>
+        <ul>${o.notes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
+        <div style="margin-top:14px"><a href="#source-${o.id}">Jump to sources ↗</a></div>
+      `;
+    }
+
+    function sortedOptions() {
+      const arr = [...filtered()];
+      const mode = sortSelect.value;
+      if (mode === 'quality') arr.sort((a,b) => b.quality - a.quality || a.distance - b.distance);
+      else if (mode === 'distance') arr.sort((a,b) => a.distance - b.distance || b.quality - a.quality);
+      else if (mode === 'name') arr.sort((a,b) => a.name.localeCompare(b.name));
+      else arr.sort((a,b) => fitScore(b) - fitScore(a));
+      return arr;
+    }
+
+    function renderRankList() {
+      rankList.innerHTML = sortedOptions().map((o, i) => `
+        <button class="rank-item ${o.id === selectedId ? 'active' : ''}" data-id="${o.id}">
+          <span class="rank-no">${i + 1}</span>
+          <span class="rank-name">${escapeHtml(o.short)}</span>
+          <span class="rank-score">${fitScore(o).toFixed(0)}</span>
+        </button>
+      `).join('');
+      rankList.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => { selectedId = btn.dataset.id; renderAll(false); }));
+    }
+
+    function renderTable() {
+      summaryRows.innerHTML = sortedOptions().map(o => `
+        <tr>
+          <td><b>${escapeHtml(o.name)}</b><br><a href="#source-${o.id}">sources</a></td>
+          <td><span class="type-dot" style="background:${typeColors[o.type]}"></span>${escapeHtml(o.type)}</td>
+          <td>${o.distance.toFixed(1)} km</td>
+          <td>${o.quality.toFixed(2)}/5<br><span style="color:var(--muted)">${escapeHtml(o.ratingLabel)}</span></td>
+          <td>${escapeHtml(o.bestFor)}</td>
+          <td>${escapeHtml(o.watchOut)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderSources() {
+      sourcesGrid.innerHTML = options.map(o => `
+        <article class="source-group" id="source-${o.id}">
+          <h3>${escapeHtml(o.name)}</h3>
+          <ul>${o.sources.map(([label,url]) => `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul>
+        </article>
+      `).join('');
+    }
+
+    function renderAll(updateSources = false) {
+      weightLabel.textContent = `${weight.value}%`;
+      drawChart();
+      renderDetail();
+      renderRankList();
+      renderTable();
+      if (updateSources) renderSources();
+    }
+
+    weight.addEventListener('input', () => renderAll(false));
+    sortSelect.addEventListener('change', () => renderAll(false));
+    initFilters();
+    renderAll(true);
+  </script>
+</body>
+</html>
