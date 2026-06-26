@@ -402,7 +402,7 @@
 
     .table-card { padding: 24px; margin-top: 18px; overflow: hidden; }
     .table-scroll { overflow-x: auto; border-radius: 18px; border: 1px solid rgba(115,105,90,.18); background: #fffdf8; }
-    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    table { width: 100%; border-collapse: collapse; min-width: 1120px; }
     th, td { padding: 14px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid #eee7dc; }
     th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #6c6252; background: #f5efe5; position: sticky; top: 0; }
     td { font-size: 14px; line-height: 1.42; }
@@ -420,6 +420,17 @@
     .source-group h3 { margin: 0 0 10px; font-size: 16px; letter-spacing: -.02em; }
     .source-group ul { margin: 0; padding-left: 18px; color: var(--muted); line-height: 1.55; }
     .source-group li { margin: 6px 0; }
+    .price-note, .price-detail {
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(21,101,192,.06);
+      border: 1px solid rgba(21,101,192,.14);
+      color: #3f4a5c;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .price-detail p { margin: 4px 0 0; color: var(--muted); line-height: 1.45; }
 
     .callout {
       margin-top: 18px;
@@ -470,7 +481,7 @@
       <div class="hero-card">
         <span class="eyebrow">NUS Kent Ridge housing shortlist</span>
         <h1>Student accommodation, ranked clearly.</h1>
-        <p class="lede">A ranked decision board of ten practical NUS student housing and coliving choices. The main bar shows the weighted fit score; the smaller bars expose the trade-off between commute/proximity and review/quality signal.</p>
+        <p class="lede">A ranked decision board of ten practical NUS student housing and coliving choices. The main bar shows the weighted fit score; the smaller bars expose the trade-off between commute/proximity, review/quality signal, and current monthly-price reality.</p>
         <div class="hero-actions">
           <a class="btn" href="#interactive">Explore the ranking</a>
           <a class="btn secondary" href="#sources">View sources</a>
@@ -481,7 +492,7 @@
         <ul class="mini-list">
           <li><span class="num">1</span><span><b>Longest bar is strongest.</b> It combines proximity to NUS and the review/quality signal using the slider.</span></li>
           <li><span class="num">2</span><span><b>Small bars show the trade-off.</b> Commute and quality can pull in different directions; the best options stay strong on both.</span></li>
-          <li><span class="num">3</span><span><b>Exact address matters.</b> Casa Mia, Cove and Dash are providers, so only West-side listings should be treated as NUS-friendly.</span></li>
+          <li><span class="num">3</span><span><b>Exact address and price matter.</b> Casa Mia, Cove and Dash are providers, so only West-side listings with verified monthly rates should be treated as NUS-friendly.</span></li>
         </ul>
         <div class="callout"><b>Verdict:</b> apply for NUS housing first. If private, prioritize lyf one-north, Coliwoo Pasir Panjang, then a West-side Casa Mia/Cove room.</div>
       </aside>
@@ -491,7 +502,7 @@
       <div class="metric"><strong>10</strong><span>shortlisted housing / coliving options</span></div>
       <div class="metric"><strong>Weighted</strong><span>fit score from commute + quality</span></div>
       <div class="metric"><strong>4.2+</strong><span>rough threshold for stronger review signal</span></div>
-      <div class="metric"><strong>≤3 km</strong><span>practical proximity zone for Kent Ridge</span></div>
+      <div class="metric"><strong>S$771+</strong><span>lowest verified monthly estimate found</span></div>
     </section>
 
     <section id="interactive" class="workspace">
@@ -536,7 +547,7 @@
 
     <section class="table-card" id="table-section">
       <h2>Sortable summary table</h2>
-      <p>The quality score is normalized to /5. It blends public review snippets where available with a qualitative adjustment for campus/institutional fit. Use it as a shortlist guide, not as a contract decision.</p>
+      <p>The quality score is normalized to /5. It blends public review snippets where available with a qualitative adjustment for campus/institutional fit. Monthly estimates are indicative and should be refreshed before deposit/payment.</p>
       <div class="table-scroll">
         <table>
           <thead>
@@ -544,6 +555,7 @@
               <th>Option</th>
               <th>Type</th>
               <th>Approx. distance</th>
+              <th>Monthly estimate</th>
               <th>Quality signal</th>
               <th>Best for</th>
               <th>Main watch-out</th>
@@ -555,10 +567,10 @@
     </section>
 
     <section class="source-card" id="sources">
-      <h2>Sources and links</h2>
-      <p>These are the source links used to build the visual. Ratings and availability change frequently, so treat this as a launchpad for fresh checks before booking.</p>
+      <h2>Sources, pricing and links</h2>
+      <p>These are the source links used to build the visual. Ratings, availability and monthly rates change frequently, so treat this as a launchpad for fresh checks before booking.</p>
       <div class="sources-grid" id="sourcesGrid"></div>
-      <div class="callout"><b>Research caveat:</b> distances are approximate from NUS Kent Ridge and public map geocoding. For provider-based coliving, distance varies by exact room address. Public review snippets were gathered around 2026-06-26 22:44 Singapore time.</div>
+      <div class="callout"><b>Research caveat:</b> distances are approximate from NUS Kent Ridge and public map geocoding. Prices were checked in June 2026 from official pages, listing pages and search snippets where available; convert weekly rates using weekly × 52 / 12. Provider-based coliving varies by exact room, address, lease length, promotions, utilities and deposit rules. Coliwoo Pasir Panjang, yo:HA Henderson and Habyt/Hmlet did not expose reliable monthly room-rate tables during this pass, so they are marked quote-required rather than given false precision.</div>
     </section>
 
     <footer>
@@ -571,6 +583,7 @@
       {
         id: 'nus', name: 'NUS on-campus housing', short: 'NUS on-campus', type: 'Campus',
         distance: 0.4, quality: 4.7, ratingLabel: 'Qualitative 4.7/5',
+        price: { min: 771, avg: 967, max: 1274, label: 'S$771–1,274/mo', basis: 'AY26/27 NUS weekly residence rates converted using weekly × 52 / 12; GST-inclusive per pax.', confidence: 'official' },
         bestFor: 'Eligible NUS students who want lowest commute, student community and predictable admin.',
         watchOut: 'Competitive allocation; some halls/RCs have meal plans, programmes or eligibility constraints.',
         notes: ['Best first application if eligible', 'UTown Residence / PGPR / RCs / Halls', 'Usually strongest value-to-commute ratio'],
@@ -583,11 +596,13 @@
       {
         id: 'lyf', name: 'lyf one-north Singapore', short: 'lyf one-north', type: 'Coliving',
         distance: 1.4, quality: 4.5, ratingLabel: '8.5–9.1/10; 4.0–4.5/5 snippets',
+        price: { min: 2788, avg: 2794, max: 2800, label: 'S$2,788–2,800/mo', basis: 'uHomes lyf one-north listing showed SG$2,788/month; search result snippet showed SG$2,800/month. Verify final serviced-apartment rate directly.', confidence: 'listing' },
         bestFor: 'Private coliving/aparthotel feel near one-north MRT with shared kitchen, gym and pool.',
         watchOut: 'May price more like a serviced apartment or hotel than a student hostel.',
         notes: ['Strongest private overall pick', 'Modern facilities and excellent MRT access', 'Near NUS but check monthly pricing'],
         sources: [
           ['Official lyf one-north page', 'https://www.discoverasr.com/en/lyf/singapore/lyf-one-north-singapore'],
+          ['uHomes lyf one-north monthly listing', 'https://en.uhomes.com/sg/singapore/detail-apartments-1516720'],
           ['Trip.com review page', 'https://us.trip.com/hotels/singapore-hotel-detail-80962806/lyf-one-north-singapore/review.html'],
           ['Booking.com reviews', 'https://www.booking.com/reviews/sg/hotel/lyf-one-north-singapore.html'],
           ['Tripadvisor page', 'https://www.tripadvisor.com/Hotel_Review-g294265-d23753780-Reviews-Lyf_One_North_Singapore-Singapore.html']
@@ -596,11 +611,13 @@
       {
         id: 'coliwoo', name: 'Coliwoo Hotel Pasir Panjang', short: 'Coliwoo Pasir Panjang', type: 'Coliving',
         distance: 0.9, quality: 4.35, ratingLabel: '8.7/10 or ~4.3/5 snippets',
+        price: { min: null, avg: null, max: null, label: 'Quote required', basis: 'Official Coliwoo Pasir Panjang and uHomes pages confirmed flexible one-night to 12-month leases, but no reliable monthly room-rate table was extractable; request a property quote.', confidence: 'enquiry' },
         bestFor: 'Closest practical private coliving-style option for NUS Kent Ridge.',
         watchOut: 'Ratings vary by platform; inspect room size, lease terms, housekeeping and utility rules.',
         notes: ['Closest private option', 'Pasir Panjang / Haw Par Villa side', 'Kitchenette / washer-dryer style rooms may suit longer stays'],
         sources: [
           ['Official Coliwoo Pasir Panjang page', 'https://coliwoo.com/hotel-apartment-rental/pasir-panjang/'],
+          ['uHomes Coliwoo Pasir Panjang listing', 'https://en.uhomes.com/sg/singapore/detail-apartments-1576435'],
           ['Trip.com reviews', 'https://sg.trip.com/hotels/singapore-hotel-detail-114683085/coliwoo-hotel-pasir-panjang-coliving/review.html'],
           ['Coliwoo blog: Pasir Panjang', 'https://coliwoo.com/blog_post/coliwoo-hotel-pasir-panjang-modern-co-living-excellence-with-flexible-stays/']
         ]
@@ -608,11 +625,14 @@
       {
         id: 'casamia', name: 'Casa Mia Coliving near West-side locations', short: 'Casa Mia near West', type: 'Coliving',
         distance: 2.5, quality: 4.6, ratingLabel: 'Provider claims Google Reviews 4.6',
+        price: { min: 850, avg: 1725, max: 2600, label: 'S$850–2,600/mo', basis: 'Casa Mia student housing page says from S$850/mo; EdgeProp profile cites S$950 standard rooms up to S$2,600 ensuite/master rooms.', confidence: 'estimate' },
         bestFor: 'Private bedroom in a shared apartment with community and furnished setup.',
         watchOut: 'Not one fixed building; only Clementi, Dover, Kent Ridge, one-north or Queenstown listings are NUS-friendly.',
         notes: ['Good provider reputation', 'Location-dependent', 'Ask for exact door-to-campus commute before paying deposit'],
         sources: [
           ['Casa Mia NUS student accommodation guide', 'https://www.casamia.co/blog/rent-room-near-national-university-singapore-nus-student-accommodation'],
+          ['Casa Mia student housing page', 'https://www.casamia.co/page/student-housing-singapore'],
+          ['EdgeProp Casa Mia profile with rates', 'https://www.edgeprop.sg/property-news/casa-mia-coliving-bets-young-expatriate-professionals'],
           ['Casa Mia: Four Years of Easy Living', 'https://www.casamia.co/blog/four-years-of-easy-living'],
           ['Casa Mia homepage', 'https://www.casamia.co/']
         ]
@@ -620,11 +640,13 @@
       {
         id: 'cove', name: 'Cove student accommodation near West-side locations', short: 'Cove near West', type: 'Coliving',
         distance: 3.0, quality: 4.5, ratingLabel: 'ColivingSG says 4.5 stars / 10k+ reviews',
+        price: { min: 1350, avg: 1767, max: 2300, label: 'S$1,350–2,300/mo', basis: 'Cove room-search page lists Basics from 1,350 SGD/month, Classics from 1,650, and Luxe from 2,300.', confidence: 'listing' },
         bestFor: 'Broad inventory and flexible student-oriented room search.',
         watchOut: 'Quality is unit-specific; verify legal lease, bugs/maintenance, bathroom sharing and utility caps.',
         notes: ['Large student accommodation inventory', 'Good backup if exact address is near NUS', 'Inspect unit-level reviews and photos'],
         sources: [
           ['Cove student accommodation page', 'https://cove.sg/students'],
+          ['Cove rooms-for-rent search pricing', 'https://cove.sg/search/rooms-for-rent-singapore'],
           ['ColivingSG Cove brand page', 'https://www.colivingsg.com/brands/cove'],
           ['The Best Singapore Cove review', 'https://www.thebestsingapore.com/biz-review/cove-review/'],
           ['Reddit caution thread on Cove experience', 'https://www.reddit.com/r/askSingapore/comments/17xc8dd/considering_cove_living_in_sg_whats_your/']
@@ -633,12 +655,14 @@
       {
         id: 'mdis', name: 'MDIS Residences @ Stirling', short: 'MDIS @ Stirling', type: 'Student hostel',
         distance: 3.0, quality: 2.8, ratingLabel: 'Mixed / negative public snippets',
+        price: { min: 894, avg: 1407, max: 2671, label: 'S$894–2,671/mo', basis: 'Official MDIS/Collabil room rents range from S$894 quad bay-window to S$2,671 suite; GST-inclusive.', confidence: 'official' },
         bestFor: 'Students who need dedicated student-hostel-style accommodation near Queenstown.',
         watchOut: 'Several negative review snippets; inspect room, facilities and deposit/refund terms carefully.',
         notes: ['Near-ish to NUS', 'Student-residence positioning', 'Only consider after in-person viewing'],
         sources: [
           ['MDIS Residences official hostel site', 'https://hostel.mdis.edu.sg/'],
           ['MDIS Residences @ Stirling official info', 'https://www.mdis.edu.sg/mdis-residences-stirling'],
+          ['Collabil MDIS Residences monthly rooms', 'https://www.collabil.app/sg/singapore/properties/mdis-residences--stirling'],
           ['University Living MDIS listing', 'https://www.universityliving.com/singapore/singapore/property/mdis-residences'],
           ['EdgeProp reviews page', 'https://www.edgeprop.sg/condo-apartment/mdis-residence@stirling']
         ]
@@ -646,6 +670,7 @@
       {
         id: 'yoha', name: 'yo:HA @ Henderson', short: 'yo:HA Henderson', type: 'Student hostel',
         distance: 5.0, quality: 3.2, ratingLabel: 'Basic / dated-facility snippets',
+        price: { min: null, avg: null, max: null, label: 'Quote required', basis: 'Official yo:HA Henderson page was inaccessible/suspended during this check and Student.com redirected; verify directly before using in budget.', confidence: 'enquiry' },
         bestFor: 'Budget-conscious students who can accept a longer commute and basic hostel facilities.',
         watchOut: 'Not very close to Kent Ridge; facilities may be dated compared with newer coliving options.',
         notes: ['Student hostel format', 'Henderson / Redhill side', 'Reasonable budget option if commute is acceptable'],
@@ -657,6 +682,7 @@
       {
         id: 'habyt', name: 'Habyt / Hmlet Cantonment', short: 'Habyt/Hmlet Cantonment', type: 'Coliving',
         distance: 7.5, quality: 4.5, ratingLabel: 'Tripadvisor snippets around 4.5/5',
+        price: { min: null, avg: null, max: null, label: 'Quote required', basis: 'Habyt/Hmlet public pages did not expose a reliable monthly student-room rate during this check; central serviced-stay pricing can be materially higher than room-share coliving.', confidence: 'enquiry' },
         bestFor: 'Students who value central-city living over proximity to NUS.',
         watchOut: 'Cantonment/Tanjong Pagar is far for daily Kent Ridge classes.',
         notes: ['Good central coliving option', 'Polished but commute-heavy', 'Consider only if lifestyle beats commute'],
@@ -670,6 +696,7 @@
       {
         id: 'dash', name: 'Dash Living central / student stays', short: 'Dash Living central', type: 'Coliving',
         distance: 8.0, quality: 3.4, ratingLabel: 'Mixed Trustpilot snippets',
+        price: { min: 1600, avg: 1776, max: 1957, label: 'S$1,600–1,957/30 nights', basis: 'Dash Singapore page lists East Meadows from S$1,600–1,648/30 nights and Maylea West Coast from S$1,900–1,957/30 nights.', confidence: 'listing' },
         bestFor: 'Flexible furnished stays if a suitable West-side property appears.',
         watchOut: 'Central locations are commute-heavy; deposit and support reviews are mixed.',
         notes: ['Flexible living provider', 'Only NUS-friendly if exact address is west', 'Scrutinize cancellation/deposit terms'],
@@ -682,11 +709,14 @@
       {
         id: 'balestier', name: "Balestier Students' Hostel", short: 'Balestier Hostel', type: 'Student hostel',
         distance: 10.5, quality: 3.1, ratingLabel: 'Limited public rating data',
+        price: { min: 600, avg: 1053, max: 1500, label: 'S$600–1,500/mo', basis: 'Official Balestier room pages list eight-pax S$600, six-pax S$780, quad S$980, mini single S$1,100–1,300, twin S$1,130, triple S$1,180 and single S$1,500.', confidence: 'official' },
         bestFor: 'Students studying nearer central/Novena/Balestier, or those prioritizing legacy student-hostel setup.',
         watchOut: 'Far from NUS Kent Ridge; review data is thinner than for major coliving operators.',
         notes: ['Longstanding student hostel', 'Far for NUS', 'Budget/availability may be the main reason to consider'],
         sources: [
           ['Balestier Students’ Hostel official site', 'https://bshostel.com/'],
+          ['Balestier single-room rate page', 'https://bshostel.com/room/single-room/'],
+          ['Balestier quad-room rate page', 'https://bshostel.com/room/quad-room/'],
           ['uHomes Balestier listing', 'https://en.uhomes.com/sg/singapore/detail-apartments-1551690'],
           ['Student.com Balestier listing', 'https://www.student.com/sg/singapore/p/balestier-students-hostel-2']
         ]
@@ -725,6 +755,16 @@
     function filtered() { return options.filter(o => activeTypes.has(o.type)); }
     function selected() { return options.find(o => o.id === selectedId) || options[0]; }
     function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function formatSgd(n) { return `S$${Math.round(Number(n)).toLocaleString('en-SG')}`; }
+    function priceLabel(o) { return o.price ? o.price.label : 'Price check pending'; }
+    function priceSubLabel(o) {
+      if (!o.price) return 'Price check pending';
+      if (o.price.avg) return `avg ${formatSgd(o.price.avg)}`;
+      return confidenceLabel(o.price.confidence);
+    }
+    function confidenceLabel(confidence) {
+      return ({ official: 'official rate', listing: 'listing rate', estimate: 'market estimate', enquiry: 'quote needed' })[confidence] || confidence || 'pricing note';
+    }
 
     function initFilters() {
       ['Campus', 'Coliving', 'Student hostel'].forEach(type => {
@@ -782,7 +822,7 @@
                   <span class="component-track"><span class="component-fill" style="--component:${quality.toFixed(1)};--component-color:#1565c0"></span></span>
                 </span>
               </span>
-              <span class="decision-note">${escapeHtml(decisionBand(o, fit))} · ${o.distance.toFixed(1)} km · ${o.quality.toFixed(2)}/5</span>
+              <span class="decision-note">${escapeHtml(decisionBand(o, fit))} · ${o.distance.toFixed(1)} km · ${o.quality.toFixed(2)}/5 · ${escapeHtml(priceLabel(o))}</span>
             </span>
             <span class="decision-score">${fit.toFixed(0)}<small>fit</small></span>
           </button>
@@ -807,9 +847,11 @@
         <div class="score-grid">
           <div class="score-box"><b>${o.distance.toFixed(1)} km</b><span>Approx. NUS distance signal</span></div>
           <div class="score-box"><b>${o.quality.toFixed(2)}/5</b><span>${escapeHtml(o.ratingLabel)}</span></div>
+          <div class="score-box"><b>${escapeHtml(priceLabel(o))}</b><span>Monthly estimate · ${escapeHtml(confidenceLabel(o.price?.confidence))}</span></div>
           <div class="score-box"><b>${fitScore(o).toFixed(0)}</b><span>Dynamic fit score</span></div>
           <div class="score-box"><b>${o.sources.length}</b><span>Source links</span></div>
         </div>
+        <div class="price-detail"><b>Pricing basis</b><p>${escapeHtml(o.price?.basis || 'Pricing check pending.')}</p></div>
         <b>Main watch-out</b>
         <p style="margin:6px 0 0;color:var(--muted);line-height:1.55">${escapeHtml(o.watchOut)}</p>
         <ul>${o.notes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
@@ -844,6 +886,7 @@
           <td><b>${escapeHtml(o.name)}</b><br><a href="#source-${o.id}">sources</a></td>
           <td><span class="type-dot" style="background:${typeColors[o.type]}"></span>${escapeHtml(o.type)}</td>
           <td>${o.distance.toFixed(1)} km</td>
+          <td><b>${escapeHtml(priceLabel(o))}</b><br><span style="color:var(--muted)">${escapeHtml(priceSubLabel(o))}</span></td>
           <td>${o.quality.toFixed(2)}/5<br><span style="color:var(--muted)">${escapeHtml(o.ratingLabel)}</span></td>
           <td>${escapeHtml(o.bestFor)}</td>
           <td>${escapeHtml(o.watchOut)}</td>
@@ -855,6 +898,7 @@
       sourcesGrid.innerHTML = options.map(o => `
         <article class="source-group" id="source-${o.id}">
           <h3>${escapeHtml(o.name)}</h3>
+          <p class="price-note"><b>Pricing:</b> ${escapeHtml(o.price?.basis || 'Pricing check pending.')}</p>
           <ul>${o.sources.map(([label,url]) => `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul>
         </article>
       `).join('');
