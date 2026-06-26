@@ -87,6 +87,7 @@
       z-index: 900;
     }
     .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-pills { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 
     .pill-toggle {
@@ -106,9 +107,6 @@
       white-space: nowrap;
     }
     .pill-toggle.active { color: #fff; border-color: transparent; }
-    .pill-toggle.active.campus { background: var(--green); }
-    .pill-toggle.active.coliving { background: var(--blue); }
-    .pill-toggle.active.hostel { background: var(--orange); }
     .pill-toggle .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
     .price-range-group { display: flex; align-items: center; gap: 10px; }
@@ -154,19 +152,16 @@
     .popup-row b { color: var(--ink); font-weight: 600; }
     .popup-price { font-size: 13px; font-weight: 700; color: var(--ink); margin-top: 8px; }
     .popup-best { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; border-top: 1px solid var(--line); padding-top: 8px; }
+    .popup-link { display: inline-flex; margin-top: 10px; font-size: 12px; font-weight: 700; color: #174ea6; text-decoration: none; }
 
     /* ── Legend ── */
     .map-legend {
-      position: absolute;
-      bottom: 28px;
-      right: 10px;
-      z-index: 800;
       background: rgba(255,253,248,.94);
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 12px 16px;
       box-shadow: var(--shadow);
-      min-width: 160px;
+      min-width: 180px;
     }
     .legend-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 8px; }
     .legend-item { display: flex; align-items: center; gap: 9px; font-size: 13px; margin-top: 5px; }
@@ -190,15 +185,7 @@
   <div class="filterbar">
     <div class="filter-group">
       <span class="filter-label">Type</span>
-      <span class="pill-toggle active campus" data-type="Campus">
-        <span class="dot" style="background:#2e7d32"></span>Campus
-      </span>
-      <span class="pill-toggle active coliving" data-type="Coliving">
-        <span class="dot" style="background:#1565c0"></span>Coliving
-      </span>
-      <span class="pill-toggle active hostel" data-type="Student hostel">
-        <span class="dot" style="background:#ef6c00"></span>Student hostel
-      </span>
+      <span class="filter-pills" id="typeFilters"></span>
     </div>
     <div class="filter-group price-range-group">
       <span class="filter-label">Max price</span>
@@ -207,131 +194,156 @@
     </div>
   </div>
 
-  <div id="map">
-    <div class="map-legend">
-      <div class="legend-title">Accommodation type</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#2e7d32"></span>Campus</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#1565c0"></span>Coliving</div>
-      <div class="legend-item"><span class="legend-dot" style="background:#ef6c00"></span>Student hostel</div>
-    </div>
-  </div>
+  <div id="map"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="data/accommodations.js"></script>
   <script>
     (function () {
       var mapEl = document.getElementById('map');
-      // Show loading state immediately
-      mapEl.style.cssText = 'flex:1;min-height:0;background:#e8e4da;display:flex;align-items:center;justify-content:center;';
-      mapEl.innerHTML = '<span style="font-family:var(--sans);color:var(--muted);font-size:14px;">Loading map…</span>';
+      var typeFiltersEl = document.getElementById('typeFilters');
+      var priceSlider = document.getElementById('priceSlider');
+      var priceLabel = document.getElementById('priceLabel');
+      var typePalette = ['#2e7d32', '#1565c0', '#ef6c00', '#7b1fa2', '#00838f', '#c62828', '#6d4c41', '#5e35b1', '#455a64', '#ad6800'];
+      var typeList = Array.from(new Set(options.map(function (o) { return o.type; })));
+      var typeColors = {};
+      typeList.forEach(function (type, i) { typeColors[type] = typePalette[i % typePalette.length]; });
+      var activeTypes = {};
+      typeList.forEach(function (type) { activeTypes[type] = true; });
+      var markers = [];
+      var map;
+      var priceValues = options.map(function (o) { return o.price && o.price.max ? o.price.max : 0; }).filter(Boolean);
+      var sliderMax = Math.max(3000, Math.ceil(Math.max.apply(null, priceValues) / 500) * 500);
+      var maxPrice = sliderMax;
+
+      mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--sans);color:var(--muted);font-size:14px;">Loading map…</div>';
+      priceSlider.min = 500;
+      priceSlider.max = sliderMax;
+      priceSlider.step = 100;
+      priceSlider.value = sliderMax;
+      priceLabel.textContent = 'All prices';
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+          return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+        });
+      }
 
       function showError(msg) {
-        mapEl.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;justify-content:center;';
-        mapEl.innerHTML = '<div style="font-family:var(--sans);color:var(--muted);font-size:14px;text-align:center;padding:24px;line-height:1.6;">' + msg + '</div>';
+        mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:var(--sans);color:var(--muted);font-size:14px;text-align:center;padding:24px;line-height:1.6;">' + msg + '</div>';
+      }
+
+      function detailHref(o) {
+        return 'index.html?option=' + encodeURIComponent(o.id) + '#interactive';
+      }
+
+      function commuteText(o) {
+        return o.commute ? (o.commute.time + ' · ' + o.commute.mode) : 'Commute check pending';
+      }
+
+      function renderTypeFilters() {
+        typeFiltersEl.innerHTML = typeList.map(function (type) {
+          var color = typeColors[type];
+          return '<span class="pill-toggle active" data-type="' + escapeHtml(type) + '" style="background:' + color + '">' +
+            '<span class="dot" style="background:rgba(255,255,255,.82)"></span>' + escapeHtml(type) + '</span>';
+        }).join('');
+        typeFiltersEl.querySelectorAll('.pill-toggle').forEach(function (pill) {
+          pill.addEventListener('click', function () {
+            var type = pill.dataset.type;
+            var activeCount = Object.keys(activeTypes).filter(function (k) { return activeTypes[k]; }).length;
+            if (activeTypes[type] && activeCount <= 1) return;
+            activeTypes[type] = !activeTypes[type];
+            pill.classList.toggle('active', activeTypes[type]);
+            pill.style.background = activeTypes[type] ? typeColors[type] : 'var(--paper)';
+            refresh();
+          });
+        });
+      }
+
+      function makeIcon(color) {
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">' +
+          '<ellipse cx="14" cy="33" rx="5" ry="2" fill="rgba(0,0,0,.18)"/>' +
+          '<path d="M14 2C8.48 2 4 6.48 4 12c0 7.5 10 22 10 22s10-14.5 10-22c0-5.52-4.48-10-10-10z" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>' +
+          '<circle cx="14" cy="12" r="4.5" fill="#fff" fill-opacity=".85"/>' +
+          '</svg>';
+        return L.divIcon({ html: svg, className: '', iconSize: [28, 36], iconAnchor: [14, 36], popupAnchor: [0, -36] });
+      }
+
+      function popupHtml(o) {
+        var color = typeColors[o.type] || '#888';
+        var price = o.price ? o.price.label : 'Price check pending';
+        return '<div class="popup-inner">' +
+          '<p class="popup-name">' + escapeHtml(o.name) + '</p>' +
+          '<span class="popup-badge" style="background:' + color + '">' + escapeHtml(o.type) + '</span>' +
+          '<p class="popup-price">' + escapeHtml(price) + '</p>' +
+          '<div class="popup-row"><span>Distance to NUS</span><b>' + Number(o.distance).toFixed(1) + ' km</b></div>' +
+          '<div class="popup-row"><span>Commute</span><b>' + escapeHtml(commuteText(o)) + '</b></div>' +
+          '<div class="popup-row"><span>Quality signal</span><b>' + Number(o.quality).toFixed(2) + '/5</b></div>' +
+          '<p class="popup-best">' + escapeHtml(o.bestFor) + '</p>' +
+          '<a class="popup-link" href="' + detailHref(o) + '">View details & sources →</a>' +
+          '</div>';
+      }
+
+      function visible(o) {
+        if (!activeTypes[o.type]) return false;
+        if (o.price && o.price.min !== null && o.price.min > maxPrice) return false;
+        return true;
+      }
+
+      function refresh() {
+        if (!map) return;
+        markers.forEach(function (m) {
+          if (visible(m._optionData)) {
+            if (!map.hasLayer(m)) m.addTo(map);
+          } else {
+            if (map.hasLayer(m)) map.removeLayer(m);
+          }
+        });
+      }
+
+      function addLegend() {
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+          var div = L.DomUtil.create('div', 'map-legend');
+          div.innerHTML = '<div class="legend-title">Accommodation type</div>' + typeList.map(function (type) {
+            return '<div class="legend-item"><span class="legend-dot" style="background:' + typeColors[type] + '"></span>' + escapeHtml(type) + '</div>';
+          }).join('');
+          return div;
+        };
+        legend.addTo(map);
       }
 
       function startMap() {
+        renderTypeFilters();
         if (typeof L === 'undefined') {
           showError('Map failed to load.<br>Check your internet connection and refresh.');
           return;
         }
-        mapEl.style.cssText = 'flex:1;min-height:0;';
-
-        var typeColors = { Campus: '#2e7d32', Coliving: '#1565c0', 'Student hostel': '#ef6c00' };
-        var map = L.map('map', { center: [1.2966, 103.7764], zoom: 13, zoomControl: true });
+        mapEl.innerHTML = '';
+        map = L.map('map', { center: [1.2966, 103.7764], zoom: 13, zoomControl: true });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
           maxZoom: 19
         }).addTo(map);
-
-        function makeIcon(color) {
-          var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">' +
-            '<ellipse cx="14" cy="33" rx="5" ry="2" fill="rgba(0,0,0,.18"/>' +
-            '<path d="M14 2C8.48 2 4 6.48 4 12c0 7.5 10 22 10 22s10-14.5 10-22c0-5.52-4.48-10-10-10z" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>' +
-            '<circle cx="14" cy="12" r="4.5" fill="#fff" fill-opacity=".85"/>' +
-            '</svg>';
-          return L.divIcon({ html: svg, className: '', iconSize: [28, 36], iconAnchor: [14, 36], popupAnchor: [0, -36] });
-        }
-
-        function qualityStars(q) {
-          var full = Math.floor(q);
-          var half = q - full >= 0.25 ? 1 : 0;
-          var stars = '';
-          for (var i = 0; i < full; i++) stars += '&#9733;';
-          if (half) stars += '&#189;';
-          return stars + ' ' + q.toFixed(1) + '/5';
-        }
-
-        function popupHtml(o) {
-          var color = typeColors[o.type] || '#888';
-          var price = o.price ? o.price.label : 'Price check pending';
-          return '<div class="popup-inner">' +
-            '<p class="popup-name">' + o.name + '</p>' +
-            '<span class="popup-badge" style="background:' + color + '">' + o.type + '</span>' +
-            '<p class="popup-price">' + price + '</p>' +
-            '<div class="popup-row"><span>Distance to NUS</span><b>' + o.distance + ' km</b></div>' +
-            '<div class="popup-row"><span>Quality rating</span><b>' + qualityStars(o.quality) + '</b></div>' +
-            '<p class="popup-best">' + o.bestFor + '</p>' +
-            '</div>';
-        }
-
-        var markers = [];
         options.forEach(function (o) {
           if (!o.coords) return;
-          var color = typeColors[o.type] || '#888';
-          var marker = L.marker(o.coords, { icon: makeIcon(color) }).bindPopup(popupHtml(o), { maxWidth: 280 });
+          var marker = L.marker(o.coords, { icon: makeIcon(typeColors[o.type] || '#888') }).bindPopup(popupHtml(o), { maxWidth: 310 });
           marker._optionData = o;
           markers.push(marker);
           marker.addTo(map);
         });
-
-        var activeTypes = { Campus: true, Coliving: true, 'Student hostel': true };
-        var maxPrice = 3000;
-
-        function visible(o) {
-          if (!activeTypes[o.type]) return false;
-          if (o.price && o.price.min !== null && o.price.min > maxPrice) return false;
-          return true;
-        }
-
-        function refresh() {
-          markers.forEach(function (m) {
-            if (visible(m._optionData)) {
-              if (!map.hasLayer(m)) m.addTo(map);
-            } else {
-              if (map.hasLayer(m)) map.removeLayer(m);
-            }
-          });
-        }
-
-        document.querySelectorAll('.pill-toggle').forEach(function (pill) {
-          pill.addEventListener('click', function () {
-            var type = pill.dataset.type;
-            var anyLeft = Object.keys(activeTypes).filter(function (k) { return activeTypes[k]; }).length;
-            if (activeTypes[type] && anyLeft <= 1) return; // keep at least one
-            activeTypes[type] = !activeTypes[type];
-            pill.classList.toggle('active', activeTypes[type]);
-            refresh();
-          });
-        });
-
-        var priceSlider = document.getElementById('priceSlider');
-        var priceLabel = document.getElementById('priceLabel');
-        priceSlider.addEventListener('input', function () {
-          maxPrice = Number(priceSlider.value);
-          priceLabel.textContent = maxPrice >= 3000 ? 'All prices' : 'Up to S$' + maxPrice.toLocaleString('en-SG') + '/mo';
-          refresh();
-        });
+        addLegend();
       }
 
-      // Start
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startMap);
-      } else {
-        startMap();
-      }
+      priceSlider.addEventListener('input', function () {
+        maxPrice = Number(priceSlider.value);
+        priceLabel.textContent = maxPrice >= sliderMax ? 'All prices' : 'Up to S$' + maxPrice.toLocaleString('en-SG') + '/mo';
+        refresh();
+      });
 
-      // Fallback: if L still undefined after 4s, show error
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startMap);
+      else startMap();
+
       setTimeout(function () {
         if (typeof L === 'undefined') showError('Map failed to load.<br>Check your internet and refresh.');
       }, 4000);

@@ -481,7 +481,7 @@
       <div class="hero-card">
         <span class="eyebrow">NUS Kent Ridge housing shortlist</span>
         <h1>Student accommodation, ranked clearly.</h1>
-        <p class="lede">A ranked decision board of ten practical NUS student housing and coliving choices. The main bar shows the weighted fit score; the smaller bars expose the trade-off between commute/proximity, review/quality signal, and current monthly-price reality.</p>
+        <p class="lede">A ranked decision board of twenty practical NUS student housing, coliving, serviced-apartment and private-rental choices. The main bar shows the weighted fit score; the smaller bars expose the trade-off between commute/proximity, review/quality signal, and current monthly-price reality.</p>
         <div class="hero-actions">
           <a class="btn" href="#interactive">Explore the ranking</a>
           <a class="btn secondary" href="#sources">View sources</a>
@@ -493,14 +493,14 @@
         <ul class="mini-list">
           <li><span class="num">1</span><span><b>Longest bar is strongest.</b> It combines proximity to NUS and the review/quality signal using the slider.</span></li>
           <li><span class="num">2</span><span><b>Small bars show the trade-off.</b> Commute and quality can pull in different directions; the best options stay strong on both.</span></li>
-          <li><span class="num">3</span><span><b>Exact address and price matter.</b> Casa Mia, Cove and Dash are providers, so only West-side listings with verified monthly rates should be treated as NUS-friendly.</span></li>
+          <li><span class="num">3</span><span><b>Exact address and price matter.</b> Provider-based coliving and private rentals are unit-specific, so exact address, monthly rate, utilities and lease terms should be verified before ranking them above fixed-location options.</span></li>
         </ul>
-        <div class="callout"><b>Verdict:</b> apply for NUS housing first. If private, prioritize lyf one-north, Coliwoo Pasir Panjang, then a West-side Casa Mia/Cove room.</div>
+        <div class="callout"><b>Verdict:</b> apply for NUS housing first. If private, prioritize fixed West-side options first: lyf one-north, Coliwoo Pasir Panjang, Oasia/Village Residence West Coast, then verified West-side Casa Mia/Cove or condo-room listings.</div>
       </aside>
     </section>
 
     <section class="meta-strip" aria-label="Page summary metrics">
-      <div class="metric"><strong>10</strong><span>shortlisted housing / coliving options</span></div>
+      <div class="metric"><strong>20</strong><span>shortlisted housing / coliving / rental options</span></div>
       <div class="metric"><strong>Weighted</strong><span>fit score from commute + quality</span></div>
       <div class="metric"><strong>4.2+</strong><span>rough threshold for stronger review signal</span></div>
       <div class="metric"><strong>S$771+</strong><span>lowest verified monthly estimate found</span></div>
@@ -556,6 +556,7 @@
               <th>Option</th>
               <th>Type</th>
               <th>Approx. distance</th>
+              <th>Commute</th>
               <th>Monthly estimate</th>
               <th>Quality signal</th>
               <th>Best for</th>
@@ -571,7 +572,7 @@
       <h2>Sources, pricing and links</h2>
       <p>These are the source links used to build the visual. Ratings, availability and monthly rates change frequently, so treat this as a launchpad for fresh checks before booking.</p>
       <div class="sources-grid" id="sourcesGrid"></div>
-      <div class="callout"><b>Research caveat:</b> distances are approximate from NUS Kent Ridge and public map geocoding. Prices were checked in June 2026 from official pages, listing pages and search snippets where available; convert weekly rates using weekly × 52 / 12. Provider-based coliving varies by exact room, address, lease length, promotions, utilities and deposit rules. Coliwoo Pasir Panjang, yo:HA Henderson and Habyt/Hmlet did not expose reliable monthly room-rate tables during this pass, so they are marked quote-required rather than given false precision.</div>
+      <div class="callout"><b>Research caveat:</b> distances are approximate from NUS Kent Ridge and public map geocoding. Prices and commute estimates were checked in June 2026 from official pages, listing pages, route snippets and public map geocoding where available; convert weekly rates using weekly × 52 / 12. Provider-based coliving varies by exact room, address, lease length, promotions, utilities and deposit rules. Coliwoo Pasir Panjang, yo:HA Henderson and Habyt/Hmlet did not expose reliable monthly room-rate tables during this pass, so they are marked quote-required rather than given false precision.</div>
     </section>
 
     <footer>
@@ -582,7 +583,9 @@
   <script src="data/accommodations.js"></script>
   <script>
 
-    const typeColors = { Campus: '#2e7d32', Coliving: '#1565c0', 'Student hostel': '#ef6c00' };
+    const typePalette = ['#2e7d32', '#1565c0', '#ef6c00', '#7b1fa2', '#00838f', '#c62828', '#6d4c41', '#5e35b1', '#455a64', '#ad6800'];
+    const typeList = [...new Set(options.map(o => o.type))];
+    const typeColors = Object.fromEntries(typeList.map((type, i) => [type, typePalette[i % typePalette.length]]));
     const decisionBoard = document.getElementById('decisionBoard');
     const detailCard = document.getElementById('detailCard');
     const rankList = document.getElementById('rankList');
@@ -594,9 +597,12 @@
     const typeFilters = document.getElementById('typeFilters');
 
     let selectedId = 'nus';
-    let activeTypes = new Set(['Campus', 'Coliving', 'Student hostel']);
+    const params = new URLSearchParams(location.search);
+    const urlOption = params.get('option');
+    if (urlOption && options.some(o => o.id === urlOption)) selectedId = urlOption;
+    let activeTypes = new Set(typeList);
 
-    const maxDistance = 11.2;
+    const maxDistance = Math.max(...options.map(o => o.distance || 0), 1) * 1.05;
 
     function proximityScore(item) {
       return Math.max(0, 100 - (item.distance / maxDistance) * 100);
@@ -613,7 +619,19 @@
 
     function filtered() { return options.filter(o => activeTypes.has(o.type)); }
     function selected() { return options.find(o => o.id === selectedId) || options[0]; }
-    function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function setSelected(id, syncUrl = false) {
+      if (!options.some(o => o.id === id)) return;
+      selectedId = id;
+      if (syncUrl && window.history?.replaceState) {
+        const next = new URL(location.href);
+        next.searchParams.set('option', selectedId);
+        next.hash = 'interactive';
+        history.replaceState({}, '', next);
+      }
+    }
+    function detailHref(o) { return `index.html?option=${encodeURIComponent(o.id)}#interactive`; }
+    function commuteLabel(o) { return o.commute ? `${o.commute.time} · ${o.commute.mode}` : 'Commute check pending'; }
+    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
     function formatSgd(n) { return `S$${Math.round(Number(n)).toLocaleString('en-SG')}`; }
     function priceLabel(o) { return o.price ? o.price.label : 'Price check pending'; }
     function priceSubLabel(o) {
@@ -626,17 +644,22 @@
     }
 
     function initFilters() {
-      ['Campus', 'Coliving', 'Student hostel'].forEach(type => {
+      typeList.forEach(type => {
         const label = document.createElement('label');
         label.className = 'pill-check';
-        label.innerHTML = `<input type="checkbox" checked data-type="${type}"><span class="type-dot" style="background:${typeColors[type]}"></span>${type}`;
+        label.innerHTML = `<input type="checkbox" checked data-type="${escapeHtml(type)}"><span class="type-dot" style="background:${typeColors[type]}"></span>${escapeHtml(type)}`;
         typeFilters.appendChild(label);
       });
       typeFilters.addEventListener('change', e => {
         if (e.target.matches('input[type="checkbox"]')) {
           const t = e.target.dataset.type;
           if (e.target.checked) activeTypes.add(t); else activeTypes.delete(t);
-          if (!activeTypes.has(selected().type) && filtered().length) selectedId = filtered()[0].id;
+          if (!activeTypes.size) {
+            activeTypes.add(t);
+            e.target.checked = true;
+            return;
+          }
+          if (!activeTypes.has(selected().type) && filtered().length) setSelected(filtered()[0].id, true);
           renderAll();
         }
       });
@@ -681,7 +704,7 @@
                   <span class="component-track"><span class="component-fill" style="--component:${quality.toFixed(1)};--component-color:#1565c0"></span></span>
                 </span>
               </span>
-              <span class="decision-note">${escapeHtml(decisionBand(o, fit))} · ${o.distance.toFixed(1)} km · ${o.quality.toFixed(2)}/5 · ${escapeHtml(priceLabel(o))}</span>
+              <span class="decision-note">${escapeHtml(decisionBand(o, fit))} · ${o.distance.toFixed(1)} km · ${escapeHtml(commuteLabel(o))} · ${o.quality.toFixed(2)}/5 · ${escapeHtml(priceLabel(o))}</span>
             </span>
             <span class="decision-score">${fit.toFixed(0)}<small>fit</small></span>
           </button>
@@ -690,7 +713,7 @@
 
       decisionBoard.querySelectorAll('.decision-row').forEach(btn => {
         btn.addEventListener('click', () => {
-          selectedId = btn.dataset.id;
+          setSelected(btn.dataset.id, true);
           renderAll(false);
           document.getElementById('detailCard').scrollIntoView({block:'nearest'});
         });
@@ -705,12 +728,14 @@
         <p style="margin:0;color:var(--muted);line-height:1.55">${escapeHtml(o.bestFor)}</p>
         <div class="score-grid">
           <div class="score-box"><b>${o.distance.toFixed(1)} km</b><span>Approx. NUS distance signal</span></div>
+          <div class="score-box"><b>${escapeHtml(o.commute?.time || '—')}</b><span>${escapeHtml(o.commute?.mode || 'Commute mode check')}</span></div>
           <div class="score-box"><b>${o.quality.toFixed(2)}/5</b><span>${escapeHtml(o.ratingLabel)}</span></div>
           <div class="score-box"><b>${escapeHtml(priceLabel(o))}</b><span>Monthly estimate · ${escapeHtml(confidenceLabel(o.price?.confidence))}</span></div>
           <div class="score-box"><b>${fitScore(o).toFixed(0)}</b><span>Dynamic fit score</span></div>
           <div class="score-box"><b>${o.sources.length}</b><span>Source links</span></div>
         </div>
         <div class="price-detail"><b>Pricing basis</b><p>${escapeHtml(o.price?.basis || 'Pricing check pending.')}</p></div>
+        <div class="price-detail"><b>Commute estimate</b><p>${escapeHtml(o.commute?.time || '—')} by ${escapeHtml(o.commute?.mode || 'mode check pending')}. ${escapeHtml(o.commute?.note || 'Exact door-to-door route should be checked before booking.')}</p></div>
         <b>Main watch-out</b>
         <p style="margin:6px 0 0;color:var(--muted);line-height:1.55">${escapeHtml(o.watchOut)}</p>
         <ul>${o.notes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
@@ -736,15 +761,16 @@
           <span class="rank-score">${fitScore(o).toFixed(0)}</span>
         </button>
       `).join('');
-      rankList.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => { selectedId = btn.dataset.id; renderAll(false); }));
+      rankList.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => { setSelected(btn.dataset.id, true); renderAll(false); }));
     }
 
     function renderTable() {
       summaryRows.innerHTML = sortedOptions().map(o => `
         <tr>
-          <td><b>${escapeHtml(o.name)}</b><br><a href="#source-${o.id}">sources</a></td>
+          <td><b>${escapeHtml(o.name)}</b><br><a href="#source-${o.id}">sources</a> · <a href="${detailHref(o)}">detail link</a></td>
           <td><span class="type-dot" style="background:${typeColors[o.type]}"></span>${escapeHtml(o.type)}</td>
           <td>${o.distance.toFixed(1)} km</td>
+          <td><b>${escapeHtml(o.commute?.time || '—')}</b><br><span style="color:var(--muted)">${escapeHtml(o.commute?.mode || 'mode check')}</span></td>
           <td><b>${escapeHtml(priceLabel(o))}</b><br><span style="color:var(--muted)">${escapeHtml(priceSubLabel(o))}</span></td>
           <td>${o.quality.toFixed(2)}/5<br><span style="color:var(--muted)">${escapeHtml(o.ratingLabel)}</span></td>
           <td>${escapeHtml(o.bestFor)}</td>
@@ -758,6 +784,7 @@
         <article class="source-group" id="source-${o.id}">
           <h3>${escapeHtml(o.name)}</h3>
           <p class="price-note"><b>Pricing:</b> ${escapeHtml(o.price?.basis || 'Pricing check pending.')}</p>
+          <p class="price-note"><b>Commute:</b> ${escapeHtml(o.commute?.time || '—')} by ${escapeHtml(o.commute?.mode || 'mode check')}. ${escapeHtml(o.commute?.note || 'Exact route depends on campus destination.')}</p>
           <ul>${o.sources.map(([label,url]) => `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul>
         </article>
       `).join('');
@@ -776,6 +803,7 @@
     sortSelect.addEventListener('change', () => renderAll(false));
     initFilters();
     renderAll(true);
+    if (urlOption) requestAnimationFrame(() => document.getElementById('detailCard')?.scrollIntoView({ block: 'nearest' }));
   </script>
 </body>
 </html>
